@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import React from "react";
 import { Depths } from '@uifabric/fluent-theme/lib/fluent/FluentDepths';
 import { PrimaryButton } from '@fluentui/react'

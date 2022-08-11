@@ -1,6 +1,9 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import React, { useState, useRef } from "react";
 import { TextField } from '@fluentui/react';
-import { Button } from '@fluentui/react'
+import { PrimaryButton } from '@fluentui/react'
 
 
 export default function AddParticipantPopover(props) {
@@ -44,8 +47,8 @@ export default function AddParticipantPopover(props) {
                             <div className="add-participant-panel-header">
                                 <TextField className="text-left" label="Identifier" onChange={e => setUserId(e.target.value)} />
                                 <TextField className="text-left" label="Alternate Caller Id (For adding phone number only)" onChange={e => setAlternateCallerId(e.target.value)} />
-                                <Button className="mt-3" onClick={handleAddCommunicationUser}>Add CommunicationUser</Button>
-                                <Button className="mt-1" onClick={handleAddPhoneNumber}>Add Phone Number</Button>
+                                <PrimaryButton className="mt-3" onClick={handleAddCommunicationUser}>Add CommunicationUser</PrimaryButton>
+                                <PrimaryButton className="mt-1" onClick={handleAddPhoneNumber}>Add Phone Number</PrimaryButton>
                             </div>
                         </div>
                     }
