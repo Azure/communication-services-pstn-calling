@@ -1,5 +1,8 @@
 import React from "react";
 import { MessageBar, MessageBarType, DefaultButton } from '@fluentui/react'
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import { Toggle } from '@fluentui/react/lib/Toggle';
 import { TooltipHost } from '@fluentui/react/lib/Tooltip';
 import StreamRenderer from "./StreamRenderer";

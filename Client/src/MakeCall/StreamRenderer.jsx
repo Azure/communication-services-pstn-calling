@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import React from "react";
 import { utils } from '../Utils/Utils';
 import { VideoStreamRenderer } from "@azure/communication-calling";

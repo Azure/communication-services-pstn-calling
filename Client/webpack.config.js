@@ -1,66 +1,69 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
 
-const HtmlWebPackPlugin = require("html-webpack-plugin");
+const HtmlWebPackPlugin = require('html-webpack-plugin');
 const path = require('path');
 
 const PORT = process.env.port || 9000;
 
 const env = process.env;
-env.development = false; // TODO find a way to really do this with env variables
+env.development = true;
 
-const isProd = env.development == null || 
-    !env.development || 
-    env.development == 'false' || 
-    (env.production != null && 
-        (env.production == true || env.production == 'true'));
+const isProd =
+  env.development == null ||
+  !env.development ||
+  env.development == 'false' ||
+  (env.production != null && (env.production == true || env.production == 'true'));
 
 module.exports = {
-    ...(isProd ? {} : { devtool: 'eval-source-map' }),
-    // devtool: 'source-map',
-    mode: isProd ? 'production' : 'development',
-    entry: "./src/index.jsx",
-    output: {
-        path: path.join(__dirname, isProd ? 'dist/build': 'dist'),
-        filename: 'build.js'
-    },
-    resolve: {
-        extensions: ['.js', '.jsx']
-    },
-    module: {
-        rules: [
-            {
-                test: /\.(js|jsx)$/,
-                exclude: [/dist/, /node_modules/],
-                use: {
-                    loader: "babel-loader"
-                }
-            },
-            {
-                test: /\.html$/,
-                use: [
-                    {
-                        loader: "html-loader"
-                    }
-                ]
-            },
-            {
-                test: /\.css$/,
-                use: ["style-loader", "css-loader"]
-            }
+  ...(isProd ? {} : { devtool: 'eval-source-map' }),
+  mode: isProd ? 'production' : 'development',
+  entry: './src/index.jsx',
+  output: {
+    path: path.join(__dirname, isProd ? 'dist/build' : 'dist'),
+    filename: 'build.js'
+  },
+  resolve: {
+    extensions: ['.js', '.jsx']
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(js|jsx)$/,
+        exclude: [/dist/, /node_modules/],
+        use: {
+          loader: 'babel-loader'
+        }
+      },
+      {
+        test: /\.html$/,
+        use: [
+          {
+            loader: 'html-loader'
+          }
         ]
-    },
-    plugins: [
-        new HtmlWebPackPlugin({
-            template: "./public/index.html",
-            filename: "./index.html"
-        })
-    ],
-    devServer: {
-        open: true,
-        hot: true,
-        port: PORT,
-        proxy: [{
-            path: '/tokens/provisionUser',
-            target: 'http://[::1]:8080'
-        }]
-    }
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
+  },
+  plugins: [
+    new HtmlWebPackPlugin({
+      template: './public/index.html',
+      filename: './index.html'
+    })
+  ],
+  devServer: {
+    open: true,
+    hot: true,
+    port: PORT,
+    proxy: [
+      {
+        path: '/tokens/provisionUser',
+        target: 'http://[::1]:8080'
+      }
+    ]
+  }
 };
