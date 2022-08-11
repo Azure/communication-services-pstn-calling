@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import React, { useEffect, createRef } from "react";
 import { utils } from '../Utils/Utils';
 import { Persona, PersonaSize } from '@fluentui/react';

@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT license.
+
 import React from "react";
 import { LocalVideoStream, VideoStreamRenderer} from '@azure/communication-calling';
 export default class LocalVideoPreviewCard extends React.Component {

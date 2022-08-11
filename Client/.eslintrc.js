@@ -23,6 +23,7 @@ module.exports = {
   },
   rules: {
     eqeqeq: 'warn',
+    indent: ['4', 'error'],
     'header/header': ['error', 'line', ' Copyright (c) Microsoft Corporation.\n Licensed under the MIT license.'],
     'react/display-name': 'off',
     curly: 'error'
