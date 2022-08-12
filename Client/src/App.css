@@ -322,9 +322,16 @@ ul {
   color: #edebe9;
 }
 
+.d-flex {
+  display: flex !important;
+}
+
 /*********************************
 *        Width and Height        *
 *********************************/
+.w-auto {
+  width: auto !important;
+}
 .w-25 {
   width: 25% !important;
 }
@@ -741,6 +748,14 @@ div.callDebugInfoJSONStringDiv {
   max-height: 500px;
   overflow-y: auto;
   overflow-x: auto;
+}
+
+.f-1 {
+  flex: 1 !important;
+}
+
+.button-width {
+  width: 80px;
 }
 
 /*********************************
