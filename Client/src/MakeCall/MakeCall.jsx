@@ -18,6 +18,7 @@ import Login from './Login';
 import { setLogLevel, AzureLogger } from '@azure/logger';
 import * as codeSamples from './CodeSamples';
 import Card from './Card';
+import DirectRouting from './DirectRoutes/DirectRouting';
 
 export default class MakeCall extends React.Component {
     constructor(props) {
@@ -332,6 +333,9 @@ export default class MakeCall extends React.Component {
 
         return (
             <div>
+                <Card title='Configure Direct Routing' showCodeIconName='ExpressRouteCircuits' code={codeSamples.directRoutingCode}>
+                    <DirectRouting disabled={false && (this.state.call || !this.state.loggedIn)} />
+                </Card>
                 <Login onLoggedIn={this.handleLogIn} />
                 <Card title='Environment information' code={codeSamples.environmentInfo} showCodeIconName='Info'>
                         <h3>Current environment details</h3>
@@ -357,17 +361,9 @@ export default class MakeCall extends React.Component {
                             onClick={this.downloadLog}>
                         </PrimaryButton>
                     } 
-                    subTitle={<div>{`Permissions audio: ${this.state.permissions.audio} video: ${this.state.permissions.video}`}</div>}
+                    subTitle={`Permissions audio: ${this.state.permissions.audio} video: ${this.state.permissions.video}`}
                 >
                     <div className="mb-2">Having provisioned an ACS Identity and initialized the SDK from the section above, you are now ready to place calls, join group calls, and receiving calls.</div>
-                    {
-                        this.state.showCallSampleCode &&
-                        <pre>
-                            <code style={{ color: '#b3b0ad' }}>
-                                {callSampleCode}
-                            </code>
-                        </pre>
-                    }
                     {
                         this.state.callError &&
                         <MessageBar
@@ -410,14 +406,14 @@ export default class MakeCall extends React.Component {
                                     disabled={this.state.call || !this.state.loggedIn}
                                     label="Destination Identity or Identities"
                                     componentRef={(val) => this.destinationUserIds = val} />
-                                <div className="ms-Grid-row mb-3 mt-3">
-                                    <div className="ms-Grid-col ms-lg6 ms-sm12">
+                                <div className="ms-Grid-row mb-3 mt-3" style={{display: 'flex', flexDirection: 'row'}}>
+                                    <div className="ms-Grid-col ms-lg6 ms-sm12" style={{marginTop: 'auto'}}>
                                         <TextField
                                             disabled={this.state.call || !this.state.loggedIn}
                                             label="Destination Phone Identity or Phone Identities"
                                             componentRef={(val) => this.destinationPhoneIds = val} />
                                     </div>
-                                    <div className="ms-Grid-col ms-lg6 ms-sm12">
+                                    <div className="ms-Grid-col ms-lg6 ms-sm12" style={{marginTop: 'auto'}}>
                                         <TextField
                                             disabled={this.state.call || !this.state.loggedIn}
                                             label="Alternate Caller Id (For calling phone numbers only)"
@@ -527,31 +523,6 @@ export default class MakeCall extends React.Component {
                             onReject={() => { this.setState({ incomingCall: undefined }) }} />
                     }
                 </Card>
-
-                <div className="card">
-                    <div className="ms-Grid">
-                        <div className="ms-Grid-row">
-                            <div className="ms-Grid-col ms-lg6 ms-sm6 mb-4">
-                                <h2>Placing and receiving calls</h2>
-                                <div>{`Permissions audio: ${this.state.permissions.audio} video: ${this.state.permissions.video}`}</div>
-                            </div>
-                            <div className="ms-Grid-col ms-lg6 ms-sm6 text-right">
-                                <PrimaryButton
-                                    className="primary-button"
-                                    iconProps={{ iconName: 'Download', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                    text={`Get Logs`}
-                                    onClick={this.downloadLog}>
-                                </PrimaryButton>
-                                <PrimaryButton
-                                    className="primary-button"
-                                    iconProps={{ iconName: 'TransferCall', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                    text={`${this.state.showCallSampleCode ? 'Hide' : 'Show'} code`}
-                                    onClick={() => this.setState({ showCallSampleCode: !this.state.showCallSampleCode })}>
-                                </PrimaryButton>
-                            </div>
-                        </div>
-                    </div>
-                </div>
                 <Card title='Video, Screen sharing, and local video preview' showCodeIconName='Video' code={codeSamples.streamingSampleCode}>
                     <h3>
                         Video - try it out.

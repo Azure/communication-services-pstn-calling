@@ -439,6 +439,8 @@ const userProvisioningAndSdkInitializationCode = `
         }
                 `;
 
+const directRoutingCode = '';
+
 export {
   callSampleCode,
   environmentInfo,
@@ -446,5 +448,6 @@ export {
   muteUnmuteSampleCode,
   holdUnholdSampleCode,
   deviceManagerSampleCode,
-  userProvisioningAndSdkInitializationCode
+  userProvisioningAndSdkInitializationCode,
+  directRoutingCode,
 };
