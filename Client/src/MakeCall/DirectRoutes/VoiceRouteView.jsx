@@ -1,8 +1,33 @@
 import React from "react";
-import { TextField, Dropdown, Checkbox } from "@fluentui/react";
+import { TextField, Dropdown, Checkbox, PrimaryButton } from "@fluentui/react";
 
-const VoiceRoutes = ({ voiceRoute, sbcs, onChange, disabled, onDelete }) => (
-    <div className="d-flex mb-2" style={{justifyContent: 'center', alignContent: 'center'}}>
+const validateVoiceRoute = ({key, voiceRouteName, numberPattern, sbcKey, enabled}) => {
+    let result = {key};
+    if (!enabled && voiceRouteName.length == 0 && numberPattern.length == 0 && sbcKey == -1) {
+        return result;
+    }
+    if (voiceRouteName.length == 0) {
+        result = {...result, voiceRouteName: 'Please enter a name.'};
+    }
+    try {
+        new RegExp(numberPattern);
+    } catch (e) {
+        result = {...result, numberPattern: 'Please enter a valid Regular Expression.'};
+    }
+    if (sbcKey == -1) {
+        result = {...result, sbcKey: 'Please select an SBC.'};
+    }
+
+    return result;
+}
+
+const validateVoiceRoutes = (voiceRoutes) => voiceRoutes
+    .map(route => validateVoiceRoute(route))
+    .filter(route => Object.keys(route) > 1)
+    .reduce((acc, errors) => ({...acc, [errors.key]: errors}), {});
+
+const VoiceRouteView = ({ voiceRoute, sbcs, onChange, disabled, onDelete }) => (
+    <div className="d-flex mb-1" style={{justifyContent: 'center', alignContent: 'center'}}>
         <Checkbox
                 value={voiceRoute.enabled}
                 disabled={disabled}
@@ -26,6 +51,7 @@ const VoiceRoutes = ({ voiceRoute, sbcs, onChange, disabled, onDelete }) => (
             </div>
             <div className="ms-Grid-col ms-lg4">
                 <Dropdown
+                    disabled={disabled}
                     options={sbcs.map((sbc) => ({text: sbc.fqdn, key: sbc.key}))}
                     selectedKey={voiceRoute.sbcKey}
                     onChange={(event, {key}) => onChange('sbcKey', voiceRoute, key)} />
@@ -61,5 +87,5 @@ const VoiceRoutesHeader = ({style, className}) => (
     </div>
 )
 
-export default VoiceRoutes;
-export { VoiceRoutesHeader };
+export default VoiceRouteView;
+export { VoiceRoutesHeader, validateVoiceRoutes, validateVoiceRoute };
