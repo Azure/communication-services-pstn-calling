@@ -1,5 +1,11 @@
-import { PrimaryButton } from '@fluentui/react';
+import { 
+    PrimaryButton, 
+    Dialog, 
+    DialogType,
+    DialogFooter
+} from '@fluentui/react';
 import React from 'react';
+import { SipRoutingClient } from '@azure/communication-phone-numbers';
 import SBCView, { 
     SBCViewHeader, 
     validateSbcList 
@@ -8,29 +14,58 @@ import VoiceRouteView, {
     validateVoiceRoutes, 
     VoiceRoutesHeader, 
 } from './VoiceRouteView';
+import { utils } from '../../Utils/Utils.js'
 
 const emptySBC = {
     key: null,
     fqdn: '',
-    port: '',
+    sipSignalingPort: '',
 }
 
 const emptyVoiceRoute = {
     key: null,
-    enabled: false,
-    voiceRouteName: '',
+    name: '',
     numberPattern: '',
-    sbcKey: -1,
+    sbcKeys: [],
 }
 
+/**
+ * Get a new unused key for a given list.
+ * In sbcList and voiceRoutes, keys are being used to 
+ * distinguish elements and their input fields.
+ * This function finds an unused key if a new element is to be added.
+ * It finds the highest key and adds one.
+ * 
+ * @param {} list the sbcList or the voiceRoutes list.
+ * @returns number of the new key.
+ */
 const getNewKey = (list) => list.length == 0 ? 0 : 
     list.reduce((a, b) => Math.max(a, b.key), 0) + 1;
 
-const DirectRouting = ({ disabled }) => {
+// Sip client that is initialized after the connectionString has been retrieved
+let sipClient = null;
+
+/**
+ * Component that contains all the functionality regarding Direct Routing.
+ * It provides the functionality to add and remove trunks and Voice Routes.
+ * The input fields and buttons can be disabled by setting the *disabled* prop to *true*.
+ * 
+ * @param {{
+ * disabled: boolean
+ * className: string
+ * style: object
+ * }} props Props of the component.
+ * @returns A view
+ */
+const DirectRouting = (props) => {
     // Whether the SBCs (true) or the VoiceRoutes (false) are being edited
     const [isEditingSbcs, setEditingSbcs] = React.useState(true);
+    const [disabled, setDisabled] = React.useState(props.disabled);
+    const [isDownloading, setDownloading] = React.useState(true);
+    const [isUploading, setUploading] = React.useState(false);
+    const [showUploadedDialog, setShowUploadedDialog] = React.useState(false);
 
-    // Variables for tracking the sbcs
+    // Variables for tracking the sbcs and voice routes
     const [sbcList, setSbcList] = React.useState([
         {...emptySBC, key: 0},
         {...emptySBC, key: 1},
@@ -42,25 +77,19 @@ const DirectRouting = ({ disabled }) => {
         {...emptyVoiceRoute, key: 2}
     ]);
 
-    // Variables for tracking the sbcs with entered values
-    let isSbcListFaulty, isVoicesRoutesFaulty, nonEmptySbcList, nonEmptyVoiceRoutes;
-    try {
-        nonEmptySbcList = sbcList.filter(({fqdn, port}) => fqdn.length > 0 || port.length > 0);
-        nonEmptyVoiceRoutes = voiceRoutes.filter(route => 
-        route.enabled || route.voiceRouteName.length > 0 || route.numberPattern.length > 0 || route.sbcKey != -1);
-        // Check whether errors exist in the data.
-        isSbcListFaulty = nonEmptySbcList.filter(({errors}) => errors != undefined).length > 0;
-        isVoicesRoutesFaulty = nonEmptyVoiceRoutes.filter(({errors}) => errors != undefined).length > 0
-    } catch (e) {
-        debugger;
-    }
 
-    console.log(JSON.stringify(sbcList));
+    // Variables for tracking the sbcs with entered values
+    const nonEmptySbcList = sbcList.filter(({fqdn, sipSignalingPort}) => fqdn.length > 0 || sipSignalingPort.length > 0);
+    const nonEmptyVoiceRoutes = voiceRoutes.filter(route => 
+        route.name.length > 0 || route.numberPattern.length > 0 || route.sbcKeys.length > 0);
+    // Check whether errors exist in the data.
+    const isSbcListFaulty = nonEmptySbcList.filter(({errors}) => errors && Object.keys(errors).length > 0).length > 0;
+    const isVoicesRoutesFaulty = nonEmptyVoiceRoutes.filter(({errors}) => errors && Object.keys(errors).length > 0).length > 0
 
     /**
      * Update a change to any SBC field to the local SBC variable.
      * 
-     * @param {str} field the field that is being edited ('fqdn' or 'port')
+     * @param {str} field the field that is being edited ('fqdn' or 'sipSignalingPort')
      * @param {sbc} sbc the sbc that is being edited. 
      * @param {str} newValue the new value to set the field of the sbc to.
      * @returns void
@@ -72,23 +101,18 @@ const DirectRouting = ({ disabled }) => {
         // out, and add the element again. Lastly, make sure they are in the right
         // order again.
         // Also check whether the last value is being edited, and add a new value if necessary
-        const newList = [
+        return validateSbcList([
             ...oldList.filter(value => value.key !== sbc.key),
             {...sbc, [field]: newValue},
             ...(isEditingLastValue ? [{...emptySBC, key: getNewKey(oldList)}] : [])
-        ];
-        const errors = validateSbcList(newList);
-        return newList
-            .map(sbc => ({...sbc, errors: errors[sbc.key]}))
-            .sort((a, b) => a.key - b.key);
+        ]).sort((a, b) => a.key - b.key);
     })
 
 
     /**
      * Update a change to any VoiceRoute field to the local VoiceRoute variable.
      * 
-     * @param {str} field the field to update. Either enabled, voiceRouteName, 
-     *  numberPattern, or sbcKey.
+     * @param {str} field the field to update. Either name, numberPattern, or sbcKeys.
      * @param {voiceRoute} voiceRoute the voiceRoute to edit. 
      * @param {str, boolean} newValue the value to set the field of the voiceRoute to
      * @returns void
@@ -100,15 +124,11 @@ const DirectRouting = ({ disabled }) => {
         // out, and add the element again. Lastly, make sure they are in the right
         // order again.
         // Also check whether the last value is being edited, and add a new value if necessary
-        const newList = [
+        return validateVoiceRoutes([
             ...oldList.filter(value => value.key !== voiceRoute.key),
             {...voiceRoute, [field]: newValue},
             ...(isEditingLastValue ? [{...emptyVoiceRoute, key: getNewKey(oldList)}] : [])
-        ];
-        const errors = validateVoiceRoutes(newList);
-        return newList
-            .map(route => ({...route, errors: errors[route.key]}))
-            .sort((a, b) => a.key - b.key);
+        ]).sort((a, b) => a.key - b.key);
     })
 
     /**
@@ -161,34 +181,100 @@ const DirectRouting = ({ disabled }) => {
 
         // Delete the reference to this SBC from any VoiceRoute still referencing it
         setVoiceRoutes((oldList) => [
-            ...oldList.filter(({sbcKey}) => sbcKey != key),
-            ...oldList.filter(({sbcKey}) => sbcKey == key)
-                .map(voiceRoute => ({...voiceRoute, sbcKey: -1}))
+            ...oldList.filter(({sbcKeys}) => !sbcKeys.includes(key)),
+            ...oldList.filter(({sbcKeys}) => sbcKeys.includes(key))
+                .map(({sbcKeys, ...voiceRoute}) => ({
+                    ...voiceRoute, 
+                    sbcKeys: sbcKeys.filter((_key) => _key == key)
+                }))
         ].sort((a, b) => a.key - b.key))
     }
+    
+    /**
+     * Upload the data when the user clicks on *Create*.
+     */
+    const onCreateClick = async () => {
+        setUploading(true);
 
-    const onNextClick = () => {
-        // TODO make work with errors
-        if (isSbcListFaulty) {
-            console.log(JSON.stringify(sbcErrors));
-            return;
-        }
-        setEditingSbcs(false);
+        // Delete the key and errors fields from the sbc
+        // and parse the sipSignaling port to an int
+        const trunks = nonEmptySbcList.map(({key, sipSignalingPort, errors, ...sbc}) => ({
+            ...sbc, 
+            sipSignalingPort: parseInt(sipSignalingPort)
+        }));
+
+        // Delete the key and errors fields from the routes
+        // and find the FQDNs of the selected trunks
+        const routes = nonEmptyVoiceRoutes.map(({key, errors, sbcKeys, ...route}) => ({
+            ...route, 
+            description: null, 
+            trunks: sbcKeys.map(key => nonEmptySbcList.find((sbc) => sbc.key == key).fqdn)
+        }));
+        await sipClient.setTrunks(trunks);
+        await sipClient.setRoutes(routes);
+        setUploading(false);
+        setShowUploadedDialog(true);
     }
 
-    const createDirectRouting = () => {
-        if (isVoicesRoutesFaulty) {
-            console.log(JSON.stringify(voiceRouteErrors));
-            return
+    /**
+     * Download the current settings from Azure.
+     * First retrieves the *connectionString* from the server, and then 
+     * uses this to retrieve the trunks (SBCs) and the Voice Routes from Azure.
+     */
+    const downloadData = async () => {
+        setDownloading(true);
+
+        // Retrieve the connectionString, and the trunks and routes
+        const { connectionString } = await utils.getConnectionString();
+        sipClient = new SipRoutingClient(connectionString);
+        const trunks = await sipClient.getTrunks();
+        const routes = await sipClient.getRoutes();
+
+        // Create a list of SBCs from the list of trunks
+        // Parse the ports to strings, and add a key
+        // The key is an internally used unique identifier for the trunk
+        let newSbcList = trunks.map(({sipSignalingPort, ...trunk}, key) => ({
+            ...trunk, 
+            key, 
+            sipSignalingPort: sipSignalingPort.toString()
+        }));
+        // Make sure at least three trunks are shown
+        while (newSbcList.length < 3) {
+            newSbcList = [...newSbcList, {...emptySBC, key: newSbcList.length}];
         }
-        // Todo upload
-        console.log('Uploading!');
+
+        // Add a key to the voiceroutes (same as with SBCs) and
+        // And change the fqdn list in the trunks field to this the key of the right sbc
+        // This way the voice route points to the correct SBC
+        let newVoiceRoutes = routes.map(({trunks, ...route}, key) => ({
+            ...route, 
+            key, 
+            sbcKeys: trunks.map((trunk) => newSbcList.find(({fqdn}) => fqdn == trunk).key)
+        }));
+        while (newVoiceRoutes.length < 3) {
+            newVoiceRoutes = [...newVoiceRoutes, {...emptyVoiceRoute, key: newVoiceRoutes.length}];
+        }
+        setSbcList(newSbcList);
+        setVoiceRoutes(newVoiceRoutes);
+        setDownloading(false);
     }
+
+    // Download the data when the page loads
+    React.useEffect(() => {
+        downloadData()
+    }, []);
+
+    // Update the disabled field when the loading status changes.
+    React.useLayoutEffect(() => 
+        setDisabled(props.disabled || isUploading || isDownloading), 
+        [props, isUploading, isDownloading]
+    );
 
     return (
-        <div>
+        <div className={props.className} style={props.style}>
             <div className="ms-Grid-row mt-3">
                 <div className="call-input-panel ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl6">
+                    
                     <h3 className="mb-1">Session Border Controllers</h3>
                     <div className="mb-3">Direct routing allows your Session Border Controllers (SBCs) to make calls through Azure Communication Services. Get started by adding your supported Session Border Controller (SBC).</div>
                     
@@ -197,6 +283,7 @@ const DirectRouting = ({ disabled }) => {
                         <SBCView 
                             key={sbc.key}
                             sbc={sbc}
+                            loading={isDownloading}
                             disabled={disabled || !isEditingSbcs}
                             onChange={onSbcChange}
                             onDelete={onSbcDelete(sbc.key)} />
@@ -207,7 +294,7 @@ const DirectRouting = ({ disabled }) => {
                             style={{float: 'right'}}
                             className="primary-button w-auto"
                             disabled={disabled || !isEditingSbcs || isSbcListFaulty}
-                            onClick={onNextClick}>
+                            onClick={() => setEditingSbcs(false)}>
                             Next
                         </PrimaryButton>
                     </div>
@@ -222,6 +309,7 @@ const DirectRouting = ({ disabled }) => {
                             key={route.key}
                             sbcs={nonEmptySbcList}
                             voiceRoute={route}
+                            loading={isDownloading}
                             disabled={disabled || isEditingSbcs}
                             onChange={onVoiceRouteChange}
                             onDelete={onVoiceRouteDelete(route.key)} />
@@ -239,12 +327,30 @@ const DirectRouting = ({ disabled }) => {
                             style={{float: 'right'}} 
                             className="primary-button w-auto"
                             disabled={disabled || isEditingSbcs || isVoicesRoutesFaulty}
-                            onClick={createDirectRouting}>
-                            Create
+                            onClick={onCreateClick}>
+                            {isUploading ? <div className="loader" /> : 'Create' }
                         </PrimaryButton>
                     </div>
                 </div>
             </div>
+            <Dialog
+                hidden={!showUploadedDialog}
+                onDismiss={() => setShowUploadedDialog(false)}
+                dialogContentProps={{
+                    type: DialogType.normal,
+                    title: 'Upload Successful',
+                    closeButtonAriaLabel: 'Close',
+                    subText: 'Azure is connecting to the SBCs. It might take up to six minutes for the changes to take effect.'
+                }}
+            >
+                <DialogFooter>
+                    <PrimaryButton 
+                        className="primary-button" 
+                        onClick={() => setShowUploadedDialog(false)}>
+                        Close
+                    </PrimaryButton>
+                </DialogFooter>
+            </Dialog>
         </div>
     )
 }

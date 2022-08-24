@@ -1,34 +1,63 @@
 import React from "react";
-import { PrimaryButton, TextField } from "@fluentui/react";
+import { 
+    PrimaryButton, 
+    TextField, 
+    Shimmer, 
+    ShimmerElementType 
+} from "@fluentui/react";
 
-// From: https://stackoverflow.com/questions/175739/how-can-i-check-if-a-string-is-a-valid-number
+/**
+ * Check whether a given string contains a number that can be turned into an int.
+ * 
+ * @see See [Stack Overflow](https://stackoverflow.com/questions/175739/how-can-i-check-if-a-string-is-a-valid-number)
+ */
 const isNumeric = (str) => typeof str == "string" && // we only process strings!  
         !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
         !isNaN(parseInt(str)) // ...and ensure strings of whitespace fail
 
-const validateSbc = ({fqdn, port, key}, isSbcDuplicated) => {
-    let result = {key};
-    if (fqdn.length == 0 && port.length == 0) {
-        return result;
+/**
+ * Check whether an SBC contains valid fields.
+ * Checks if the fqdn is unique and in the right format, 
+ * and if the port is a number
+ * 
+ * @param {{fqdn, sipSignalingPort, key}} sbc the sbc to check
+ * @param {*} isSbcDuplicated object of key -> boolean whether the SBC
+ *  fqdn strings are duplicated
+ * @returns object mapping the field to an error message, if errors are found.
+ *   If no errors, {} is returned.
+ */
+const validateSbc = ({fqdn, sipSignalingPort, key}, isSbcDuplicated) => {
+    let errors = {};
+    if (fqdn.length == 0 && sipSignalingPort.length == 0) {
+        return errors;
     }
 
+    // Check if the FQDN is in a valid format and is unique
     // From: https://stackoverflow.com/questions/11809631/fully-qualified-domain-name-validation 
     if (fqdn.match(/(?=^.{4,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)/) == null) {
-        result = {...result, fqdn: 'Please enter a valid FQDN.'};
+        errors = {...errors, fqdn: 'Please enter a valid FQDN.'};
     }
     if (isSbcDuplicated[key]) {
-        result = {...result, fqdn: 'Please enter unique FQDNs.'};
+        errors = {...errors, fqdn: 'Please enter unique FQDNs.'};
     }
 
-    if (!isNumeric(port)) {
-        result = {...result, port: 'Please enter a number.'}
+    // Check if the port is a number.
+    if (!isNumeric(sipSignalingPort)) {
+        errors = {...errors, sipSignalingPort: 'Please enter a number.'}
     }
-    if (parseInt(port) < 0) {
-        result = {...result, port: 'Please enter a number greater than zero.'}
+    if (parseInt(sipSignalingPort) < 0) {
+        errors = {...errors, sipSignalingPort: 'Please enter a number greater than zero.'}
     }
-    return result;
+    return errors;
 }
 
+/**
+ * Validate a list of SBCs.
+ * Tests them for unique FQDNs, and valid port numbers.
+ * 
+ * @param {*} sbcList list of SBC objects to check.
+ * @returns sbcList where every SBC object has an error object added.
+ */
 const validateSbcList = (sbcList) => {
     if (sbcList.length == 0) {
         return ['Please add at least one SBC.'];
@@ -41,13 +70,41 @@ const validateSbcList = (sbcList) => {
     const isSbcDuplicated = sbcList.reduce((acc, {key, fqdn}) => ({...acc, [key]: fqdnCount[fqdn] > 1}), {});
     
     // Validate FQDN
-    return sbcList
-        .map(sbc => validateSbc(sbc, isSbcDuplicated))
-        .filter((sbc) => Object.keys(sbc).length > 1)
-        .reduce((acc, errors) => ({...acc, [errors.key]: errors}), {});
+    return sbcList.map((sbc) => ({...sbc, errors: validateSbc(sbc, isSbcDuplicated)}));
 }
 
-const SBCView = ({ sbc, onChange, disabled, onDelete }) => (
+// How to show one line of the shimmering view when data is being loaded
+const shimmerElements = [
+    {type: ShimmerElementType.line, width: '60%', height: 32},
+    {type: ShimmerElementType.gap, width: '1em', height: 32},
+    {type: ShimmerElementType.line, width: '30%', height: 32},
+    {type: ShimmerElementType.gap, width: '1em', height: 32},
+    {type: ShimmerElementType.line, width: 80, height: 32}
+];
+
+/**
+ * Show input fields for an SBC.
+ * It shows a shimmering if *loading* is set to *true*.
+ * 
+ * @param {{
+ * sbc: sbc to edit
+ * onChange: function that is called with the field, the sbc, and the new values
+ * disabled: boolean
+ * loading: boolean
+ * onDelete: function that is called with a click event
+ * }} props Props for the component
+ * @returns View
+ */
+const SBCView = ({ sbc, onChange, disabled, loading, onDelete }) => (
+    <Shimmer 
+        className={loading ? "mb-3" : ''}
+        isDataLoaded={!loading} 
+        shimmerElements={shimmerElements} 
+        shimmerColors={{
+            shimmer: '#292827',
+            shimmerWave: '#484644',
+            background: '#201f1e'
+        }}>
     <div className='d-flex mb-1'>
         <div className="ms-Grid-row f-1 pr-3"> 
             <div className="ms-Grid-col ms-sm8">
@@ -63,11 +120,11 @@ const SBCView = ({ sbc, onChange, disabled, onDelete }) => (
                 <TextField
                     className="w-100"
                     disabled={disabled}
-                    value={sbc.port}
+                    value={sbc.sipSignalingPort}
                     placeholder='8080'
                     type='number'
-                    onChange={event => onChange('port', sbc, event.target.value)}
-                    errorMessage={sbc.errors?.port} />
+                    onChange={event => onChange('sipSignalingPort', sbc, event.target.value)}
+                    errorMessage={sbc.errors?.sipSignalingPort} />
             </div>
         </div>
         {onDelete != null && 
@@ -78,9 +135,15 @@ const SBCView = ({ sbc, onChange, disabled, onDelete }) => (
                 onClick={onDelete} />
         }
     </div>
+    </Shimmer>
 );
 
-
+/**
+ * Header for the SBC view. Is to be put on top of a single SBC View.
+ * 
+ * @param {{style, className}} props Props of the Element
+ * @returns View
+ */
 const SBCViewHeader = ({style, className}) => (
     <div 
         className={`${className ? className : ''} d-flex mb-1`} 

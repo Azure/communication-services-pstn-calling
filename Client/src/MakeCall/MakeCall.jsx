@@ -9,7 +9,8 @@ import {
     PrimaryButton,
     TextField,
     MessageBar,
-    MessageBarType
+    MessageBarType,
+    ThemeSettingName
 } from '@fluentui/react'
 import { Icon } from '@fluentui/react/lib/Icon';
 import IncomingCallCard from './IncomingCallCard';
@@ -24,6 +25,7 @@ export default class MakeCall extends React.Component {
     constructor(props) {
         super(props);
         this.callClient = null;
+        this.tokenCredential = null;
         this.environmentInfo = null;
         this.callAgent = null;
         this.deviceManager = null;
@@ -50,6 +52,7 @@ export default class MakeCall extends React.Component {
             deviceManagerWarning: null,
             callError: null,
             ufdMessages: [],
+            tokenCredential: null,
             permissions: {
                 audio: null,
                 video: null
@@ -66,11 +69,11 @@ export default class MakeCall extends React.Component {
     handleLogIn = async (userDetails) => {
         if (userDetails) {
             try {
-                const tokenCredential = new AzureCommunicationTokenCredential(userDetails.token);
                 setLogLevel('verbose');
+                const tokenCredential = new AzureCommunicationTokenCredential(userDetails.token);
                 this.callClient = new CallClient({ diagnostics: { appName: 'azure-communication-services', appVersion: '1.3.1-beta.1', tags: ["javascript_calling_sdk", `#clientTag:${userDetails.clientTag}`] } });
-                this.environmentInfo = await this.callClient.getEnvironmentInfo();
                 this.callAgent = await this.callClient.createCallAgent(tokenCredential, { displayName: userDetails.displayName });
+                this.environmentInfo = await this.callClient.getEnvironmentInfo();
                 // override logger to be able to dowload logs locally
                 AzureLogger.log = (...args) => {
                     this.logBuffer.push(...args);
@@ -137,7 +140,7 @@ export default class MakeCall extends React.Component {
 
                 });
 
-                this.setState({ loggedIn: true });
+                this.setState({ loggedIn: true, tokenCredential });
             } catch (e) {
                 console.error(e);
             }
@@ -334,7 +337,7 @@ export default class MakeCall extends React.Component {
         return (
             <div>
                 <Card title='Configure Direct Routing' showCodeIconName='ExpressRouteCircuits' code={codeSamples.directRoutingCode}>
-                    <DirectRouting disabled={false && (this.state.call || !this.state.loggedIn)} />
+                    <DirectRouting tokenCredential={this.state.tokenCredential} disabled={false && (this.state.call || !this.state.loggedIn)} />
                 </Card>
                 <Login onLoggedIn={this.handleLogIn} />
                 <Card title='Environment information' code={codeSamples.environmentInfo} showCodeIconName='Info'>

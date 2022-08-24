@@ -63,6 +63,10 @@ module.exports = {
       {
         path: '/tokens/provisionUser',
         target: 'http://[::1]:8080'
+      },
+      {
+        path: '/connectionString',
+        target: 'http://[::1]:8080'
       }
     ]
   }

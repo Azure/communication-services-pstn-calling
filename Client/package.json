@@ -5,6 +5,7 @@
   "dependencies": {
     "@azure/communication-calling": "^1.7.0-beta.1",
     "@azure/communication-common": "^2.1.0",
+    "@azure/communication-phone-numbers": "file:../../azure-sdk-for-js/sdk/communication/communication-phone-numbers/azure-communication-phone-numbers-1.2.0-beta.5.tgz",
     "@fluentui/react": "^8.86.3",
     "@uifabric/fluent-theme": "^7.7.7",
     "@uifabric/icons": "^7.7.4",

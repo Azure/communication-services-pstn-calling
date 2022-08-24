@@ -47,15 +47,30 @@ export const getResourceConnectionString = () => {
   }
 }
 
-const router = express.Router();
-router.get('/', provisionUser);
-router.post('/', provisionUser);
+const tokenRouter = express.Router();
+tokenRouter.get('/', provisionUser);
+tokenRouter.post('/', provisionUser);
+
+const provideConnectionString = (req, res) => {
+  try {
+      res.json({
+        connectionString: getResourceConnectionString()
+      });
+  } catch (error) {
+      console.error(error);
+  }
+}
 
 /**
  * route: /provisionUser
  * purpose: Return a new token for a new user to enable calling for.
  */
-app.use('/tokens/provisionUser', cors(), router);
+app.use('/tokens/provisionUser', cors(), tokenRouter);
+
+const stringRouter = express.Router()
+stringRouter.get('/', provideConnectionString);
+
+app.use('/connectionString', cors(), stringRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

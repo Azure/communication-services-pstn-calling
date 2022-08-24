@@ -19,6 +19,7 @@ const Card = ({title, showCodeIconName, code, children, subTitle, extraButton })
                         :
                         <h2 className="ms-Grid-col ms-lg6 ms-sm6 mb-4">{title}</h2>
                     }
+
                     <div className="ms-Grid-col ms-lg6 ms-sm6 text-right">
                         {extraButton ? extraButton : ''}
                         <PrimaryButton

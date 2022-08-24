@@ -35,6 +35,13 @@ export default class Login extends React.Component {
         }
     }
 
+    // TODO delete, is just for development
+    componentDidMount = () => {
+        if (!this.state.loggedIn) {
+            // this.provisionNewUser();
+        }
+      }
+
     render() {
 
         return (

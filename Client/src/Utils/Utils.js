@@ -67,5 +67,20 @@ export const utils = {
                 });
             }
         }
+    },
+    getConnectionString: async () => {
+        let response = await fetch('/connectionString', {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+        });
+
+        if (response.ok) {
+            return response.json();
+        }
+
+        throw new Error('Invalid connectionString response');
     }
 }
