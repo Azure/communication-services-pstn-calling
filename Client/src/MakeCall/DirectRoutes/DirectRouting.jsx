@@ -94,20 +94,14 @@ const DirectRouting = (props) => {
      * @param {str} newValue the new value to set the field of the sbc to.
      * @returns void
      */
-    const onSbcChange = (field, sbc, newValue) => setSbcList((oldList) => {
-        const isEditingLastValue = getNewKey(oldList) - 1 == sbc.key;
-
+    const onSbcChange = (field, sbc, newValue) => setSbcList((oldList) => validateSbcList([
         // Create a new list consisting of the old list with the element filtered
         // out, and add the element again. Lastly, make sure they are in the right
-        // order again.
+        ...oldList.filter(value => value.key !== sbc.key),
+        {...sbc, [field]: newValue},
         // Also check whether the last value is being edited, and add a new value if necessary
-        return validateSbcList([
-            ...oldList.filter(value => value.key !== sbc.key),
-            {...sbc, [field]: newValue},
-            ...(isEditingLastValue ? [{...emptySBC, key: getNewKey(oldList)}] : [])
-        ]).sort((a, b) => a.key - b.key);
-    })
-
+        ...(getNewKey(oldList) - 1 == sbc.key ? [{...emptySBC, key: getNewKey(oldList)}] : [])
+    ]).sort((a, b) => a.key - b.key));
 
     /**
      * Update a change to any VoiceRoute field to the local VoiceRoute variable.
@@ -117,19 +111,15 @@ const DirectRouting = (props) => {
      * @param {str, boolean} newValue the value to set the field of the voiceRoute to
      * @returns void
      */
-    const onVoiceRouteChange = (field, voiceRoute, newValue) => setVoiceRoutes((oldList) => {
-        const isEditingLastValue = getNewKey(oldList) - 1 == voiceRoute.key;
-        
+    const onVoiceRouteChange = (field, voiceRoute, newValue) => setVoiceRoutes((oldList) => validateVoiceRoutes([
         // Create a new list consisting of the old list with the element filtered
         // out, and add the element again. Lastly, make sure they are in the right
         // order again.
+        ...oldList.filter(value => value.key !== voiceRoute.key),
+        {...voiceRoute, [field]: newValue},
         // Also check whether the last value is being edited, and add a new value if necessary
-        return validateVoiceRoutes([
-            ...oldList.filter(value => value.key !== voiceRoute.key),
-            {...voiceRoute, [field]: newValue},
-            ...(isEditingLastValue ? [{...emptyVoiceRoute, key: getNewKey(oldList)}] : [])
-        ]).sort((a, b) => a.key - b.key);
-    })
+        ...(getNewKey(oldList) - 1 == voiceRoute.key ? [{...emptyVoiceRoute, key: getNewKey(oldList)}] : [])
+    ]).sort((a, b) => a.key - b.key));
 
     /**
      * Delete a VoiceRoute from the local variables.
@@ -169,7 +159,6 @@ const DirectRouting = (props) => {
             if (getNewKey(oldList) - 1 == key) {
                 return oldList;
             }
-
 
             // Delete the row from the array, unless only three items are left
             // In that case, just empty the row.

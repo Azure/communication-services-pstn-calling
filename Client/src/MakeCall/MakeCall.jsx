@@ -336,9 +336,6 @@ export default class MakeCall extends React.Component {
 
         return (
             <div>
-                <Card title='Configure Direct Routing' showCodeIconName='ExpressRouteCircuits' code={codeSamples.directRoutingCode}>
-                    <DirectRouting tokenCredential={this.state.tokenCredential} disabled={false && (this.state.call || !this.state.loggedIn)} />
-                </Card>
                 <Login onLoggedIn={this.handleLogIn} />
                 <Card title='Environment information' code={codeSamples.environmentInfo} showCodeIconName='Info'>
                         <h3>Current environment details</h3>
@@ -525,6 +522,9 @@ export default class MakeCall extends React.Component {
                             acceptCallWithVideoOptions={async () => await this.getCallOptions(true)}
                             onReject={() => { this.setState({ incomingCall: undefined }) }} />
                     }
+                </Card>
+                <Card title='Configure Direct Routing' showCodeIconName='BranchMerge' code={codeSamples.directRoutingCode}>
+                    <DirectRouting />
                 </Card>
                 <Card title='Video, Screen sharing, and local video preview' showCodeIconName='Video' code={codeSamples.streamingSampleCode}>
                     <h3>

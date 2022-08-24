@@ -439,7 +439,34 @@ const userProvisioningAndSdkInitializationCode = `
         }
                 `;
 
-const directRoutingCode = '';
+const directRoutingCode = `
+    /**
+     * Download the current settings from Azure.
+     * First retrieves the *connectionString* from the server, and then 
+     * uses this to retrieve the trunks (SBCs) and the Voice Routes from Azure.
+     */
+    const downloadData = async () => {
+        setDownloading(true);
+
+        // Retrieve the connectionString, and the trunks and routes
+        const { connectionString } = await utils.getConnectionString();
+        sipClient = new SipRoutingClient(connectionString);
+        const trunks = await sipClient.getTrunks();
+        const routes = await sipClient.getRoutes();
+    }
+
+    /**
+     * Upload the data when the user clicks on *Create*.
+     */
+    const onCreateClick = async () => {
+        setUploading(true);
+
+        await sipClient.setTrunks(trunks);
+        await sipClient.setRoutes(routes);
+        setUploading(false);
+        setShowUploadedDialog(true);
+    }
+`;
 
 export {
   callSampleCode,
