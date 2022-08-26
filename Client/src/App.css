@@ -414,6 +414,21 @@ ul {
 /*********************************
 *       Margin and Padding       *
 **********************************/
+.mt-auto {
+  margin-top: auto !important;
+}
+.ml-auto {
+  margin-left: auto !important;
+}
+.mr-auto {
+  margin-right: auto !important;
+}
+.mb-auto {
+  margin-bottom: auto !important;
+}
+.m-auto {
+  margin: auto !important;
+}
 .m-0 {
   margin: 0 !important;
 }

@@ -30,7 +30,7 @@ const validateVoiceRoute = ({name, numberPattern, sbcKeys}) => {
         errors = {...errors, numberPattern: 'Please enter a valid Regular Expression.'};
     }
     if (sbcKeys.length == 0) {
-        errors = {...errors, sbcKeys: 'Please select at least one SBCs.'};
+        errors = {...errors, sbcKeys: 'Please select at least one SBC.'};
     }
 
     return errors;

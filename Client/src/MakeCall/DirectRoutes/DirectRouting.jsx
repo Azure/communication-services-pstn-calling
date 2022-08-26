@@ -64,19 +64,12 @@ const DirectRouting = (props) => {
     const [isDownloading, setDownloading] = React.useState(true);
     const [isUploading, setUploading] = React.useState(false);
     const [showUploadedDialog, setShowUploadedDialog] = React.useState(false);
+    const [dialogTitle, setDialogTitle] = React.useState('');
+    const [dialogMessage, setDialogMessage] = React.useState('');
 
     // Variables for tracking the sbcs and voice routes
-    const [sbcList, setSbcList] = React.useState([
-        {...emptySBC, key: 0},
-        {...emptySBC, key: 1},
-        {...emptySBC, key: 2}
-    ]);
-    const [voiceRoutes, setVoiceRoutes] = React.useState([
-        {...emptyVoiceRoute, key: 0},
-        {...emptyVoiceRoute, key: 1},
-        {...emptyVoiceRoute, key: 2}
-    ]);
-
+    const [sbcList, setSbcList] = React.useState([0, 1, 2].map((key) => ({...emptySBC, key})));
+    const [voiceRoutes, setVoiceRoutes] = React.useState([0, 1, 2].map(key => ({...emptyVoiceRoute, key})));
 
     // Variables for tracking the sbcs with entered values
     const nonEmptySbcList = sbcList.filter(({fqdn, sipSignalingPort}) => fqdn.length > 0 || sipSignalingPort.length > 0);
@@ -136,10 +129,10 @@ const DirectRouting = (props) => {
 
         // Delete the row from the array, unless only three items are left
         // In that case, just empty the row.
-        return [
+        return validateVoiceRoutes([
             ...oldList.filter(route => route.key !== key), 
             ...(oldList.length == 3 ? [{...emptyVoiceRoute, key}] : [])
-        ].sort((a, b) => a.key - b.key);
+        ]).sort((a, b) => a.key - b.key);
     })
 
     /**
@@ -162,21 +155,21 @@ const DirectRouting = (props) => {
 
             // Delete the row from the array, unless only three items are left
             // In that case, just empty the row.
-            return [
+            return validateSbcList([
                 ...oldList.filter(sbc => sbc.key !== key), 
                 ...(oldList.length == 3 ? [{...emptySBC, key}] : [])
-            ].sort((a, b) => a.key - b.key)
+            ]).sort((a, b) => a.key - b.key)
         })
 
         // Delete the reference to this SBC from any VoiceRoute still referencing it
-        setVoiceRoutes((oldList) => [
+        setVoiceRoutes((oldList) => validateVoiceRoutes([
             ...oldList.filter(({sbcKeys}) => !sbcKeys.includes(key)),
             ...oldList.filter(({sbcKeys}) => sbcKeys.includes(key))
                 .map(({sbcKeys, ...voiceRoute}) => ({
                     ...voiceRoute, 
-                    sbcKeys: sbcKeys.filter((_key) => _key == key)
+                    sbcKeys: sbcKeys.filter((_key) => _key != key)
                 }))
-        ].sort((a, b) => a.key - b.key))
+        ]).sort((a, b) => a.key - b.key))
     }
     
     /**
@@ -184,7 +177,8 @@ const DirectRouting = (props) => {
      */
     const onCreateClick = async () => {
         setUploading(true);
-
+        
+        // Find the new trunks and routes that have been created
         // Delete the key and errors fields from the sbc
         // and parse the sipSignaling port to an int
         const trunks = nonEmptySbcList.map(({key, sipSignalingPort, errors, ...sbc}) => ({
@@ -199,8 +193,25 @@ const DirectRouting = (props) => {
             description: null, 
             trunks: sbcKeys.map(key => nonEmptySbcList.find((sbc) => sbc.key == key).fqdn)
         }));
-        await sipClient.setTrunks(trunks);
-        await sipClient.setRoutes(routes);
+
+        try {
+            await sipClient.setRoutes([]);
+            await sipClient.setTrunks(trunks);
+            await sipClient.setRoutes(routes);
+            setDialogTitle('Upload Successful');
+            setDialogMessage('Azure is connecting to the SBCs. It might take up to six minutes for the changes to take effect.');
+        } catch (error) {
+            console.log(`Error: ${JSON.stringify(error)}`);
+            setDialogTitle('Uploading Failed.')
+            if (error.code == 'REQUEST_SEND_ERROR') {
+                setDialogMessage('Could not connect to Azure. Please check your internet connection.');
+            } else if (error.response?.status == 422) {
+                setDialogMessage(error.response?.parsedBody.error.innerError.message);
+            } else {
+                setDialogMessage('Unknown error occurred.');
+            }
+            debugger; 
+        }
         setUploading(false);
         setShowUploadedDialog(true);
     }
@@ -327,9 +338,9 @@ const DirectRouting = (props) => {
                 onDismiss={() => setShowUploadedDialog(false)}
                 dialogContentProps={{
                     type: DialogType.normal,
-                    title: 'Upload Successful',
+                    title: dialogTitle,
                     closeButtonAriaLabel: 'Close',
-                    subText: 'Azure is connecting to the SBCs. It might take up to six minutes for the changes to take effect.'
+                    subText: dialogMessage
                 }}
             >
                 <DialogFooter>
