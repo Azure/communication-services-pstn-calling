@@ -4,10 +4,10 @@
 const HtmlWebPackPlugin = require('html-webpack-plugin');
 const path = require('path');
 
-const PORT = process.env.port || 9000;
-
 const env = process.env;
 env.development = true;
+
+const PORT = env.port || 9000;
 
 const isProd =
   env.development == null ||
@@ -16,31 +16,37 @@ const isProd =
   (env.production != null && (env.production == true || env.production == 'true'));
 
 module.exports = {
-  ...(isProd ? {} : { devtool: 'eval-source-map' }),
-  mode: isProd ? 'production' : 'development',
-  entry: './src/index.jsx',
-  output: {
-    path: path.join(__dirname, isProd ? 'dist/build' : 'dist'),
-    filename: 'build.js'
-  },
-  resolve: {
-    extensions: ['.js', '.jsx']
-  },
-  module: {
-    rules: [
-      {
-        test: /\.(js|jsx)$/,
-        exclude: [/dist/, /node_modules/],
-        use: {
-          loader: 'babel-loader'
-        }
-      },
-      {
-        test: /\.html$/,
-        use: [
-          {
-            loader: 'html-loader'
-          }
+    ...(isProd ? {} : { devtool: 'eval-source-map' }),
+    mode: isProd ? 'production' : 'development',
+    entry: "./src/index.jsx",
+    output: {
+        path: path.join(__dirname, isProd ? 'dist/build': 'dist'),
+        filename: 'build.js'
+    },
+    resolve: {
+        extensions: ['.js', '.jsx']
+    },
+    module: {
+        rules: [
+            {
+                test: /\.(js|jsx)$/,
+                exclude: [/dist/, /node_modules/],
+                use: {
+                    loader: "babel-loader"
+                }
+            },
+            {
+                test: /\.html$/,
+                use: [
+                    {
+                        loader: "html-loader"
+                    }
+                ]
+            },
+            {
+                test: /\.css$/,
+                use: ["style-loader", "css-loader"]
+            }
         ]
       },
       {
