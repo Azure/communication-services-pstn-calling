@@ -3,16 +3,34 @@ import { TagPicker } from '@fluentui/react';
 import React from 'react';
 import { utils } from '../Utils/Utils';
 
-let phoneNumbersClient = null;
+let phoneNumbersClient = null; // Client that handles the retrieval of the phone numbers
 
-const AlternateCallerIdPicker = ({ disabled, label, onChange }) => {
-    const [phoneNumbers, setPhoneNumbers] = React.useState([]);
+/**
+ * Component that provides a picker for existing DO phone numbers.
+ * Also allows for custom phone numbers.
+ * 
+ * @param {*} param0 whether it is disabled, what the label should be, etc
+ * @returns  view
+ */
+const AlternateCallerIdPicker = ({ disabled, label, onChange, className }) => {
+    const [phoneNumbers, setPhoneNumbers] = React.useState([]); // List of phone numbers found
 
+    /**
+     * Filter the suggestions for the phone numbers.
+     * Also allows for picking the phone number that is currently being entered.
+     * 
+     * @param {string} filterText the text that is currently entered 
+     * @param {*} selectedNumbers list of already selected numbers. Is not used.
+     * @returns List of numbers that the user can choose from.
+     */
     const filterSuggestedNumbers = (filterText, selectedNumbers) => {
         const numbers = filterText ? phoneNumbers.filter(number => number.name.indexOf(filterText) > -1) : phoneNumbers;
         return [{ name: filterText, key: filterText }, ...numbers];
     }
 
+    /**
+     * Load the bought direct offer phone numbers from Azure.
+     */
     const loadPhoneNumbers = async () => {
         const { connectionString } = await utils.getConnectionString();
         phoneNumbersClient = new PhoneNumbersClient(connectionString);
@@ -23,15 +41,14 @@ const AlternateCallerIdPicker = ({ disabled, label, onChange }) => {
             foundPhoneNumbers = [...foundPhoneNumbers, phoneNumber.phoneNumber];
         }
         setPhoneNumbers(foundPhoneNumbers.map((number) => ({ key: number, name: number })));
-        console.warn(`Phone numbers: ${JSON.stringify(foundPhoneNumbers)}`);
-
     }
 
+    // When the page is loaded, load the phone numbers.
     React.useEffect(() => {
         loadPhoneNumbers();   
     }, []);
     return (
-        <div className={`alternateIdPicker ${disabled ? 'is-disabled' : ''}`}>
+        <div className={`alternateIdPicker ${disabled ? 'is-disabled' : ''} ${className}`}>
             <label htmlFor="alternateIdPicker">{label}</label>
             <TagPicker 
                 removeButtonAriaLabel='Remove'
