@@ -20,6 +20,7 @@ import { setLogLevel, AzureLogger } from '@azure/logger';
 import * as codeSamples from './CodeSamples';
 import Card from './Card';
 import DirectRouting from './DirectRoutes/DirectRouting';
+import AlternateCallerIdPicker from './AlternateCallerIdPicker';
 
 export default class MakeCall extends React.Component {
     constructor(props) {
@@ -29,15 +30,6 @@ export default class MakeCall extends React.Component {
         this.environmentInfo = null;
         this.callAgent = null;
         this.deviceManager = null;
-        this.destinationUserIds = null;
-        this.destinationPhoneIds = null;
-        this.destinationGroup = null;
-        this.meetingLink = null;
-        this.meetingId = null;
-        this.threadId = null;
-        this.messageId = null;
-        this.organizerId = null;
-        this.tenantId = null;
         this.callError = null;
         this.logBuffer = [];
 
@@ -56,7 +48,17 @@ export default class MakeCall extends React.Component {
             permissions: {
                 audio: null,
                 video: null
-            }
+            },
+            destinationPhoneIds: '',
+            destinationUserIds: '',
+            alternateCallerId: '',
+            destinationGroup: '29228d3e-040e-4656-a70e-890ab4e173e5',
+            meetingLink: '',
+            meetingId: '',
+            threadId: '',
+            messageId: '',
+            organizerId: '',
+            tenantId: ''
         };
 
         setInterval(() => {
@@ -158,8 +160,8 @@ export default class MakeCall extends React.Component {
     placeCall = async (withVideo) => {
         try {
             let identitiesToCall = [];
-            const userIdsArray = this.destinationUserIds.value.split(',');
-            const phoneIdsArray = this.destinationPhoneIds.value.split(',');
+            const userIdsArray = this.state.destinationUserIds.split(',');
+            const phoneIdsArray = this.state.destinationPhoneIds.split(',');
 
             userIdsArray.forEach((userId, index) => {
                 if (userId) {
@@ -187,8 +189,9 @@ export default class MakeCall extends React.Component {
 
             const callOptions = await this.getCallOptions(withVideo);
 
-            if (this.alternateCallerId.value !== '') {
-                callOptions.alternateCallerId = { phoneNumber: this.alternateCallerId.value.trim() };
+            if (this.state.alternateCallerId !== '') {
+                debugger;
+                callOptions.alternateCallerId = { phoneNumber: this.state.alternateCallerId.trim() };
             }
 
             this.callAgent.startCall(identitiesToCall, callOptions);
@@ -217,7 +220,7 @@ export default class MakeCall extends React.Component {
     joinGroup = async (withVideo) => {
         try {
             const callOptions = await this.getCallOptions(withVideo);
-            this.callAgent.join({ groupId: this.destinationGroup.value }, callOptions);
+            this.callAgent.join({ groupId: this.state.destinationGroup }, callOptions);
         } catch (e) {
             console.error('Failed to join a call', e);
             this.setState({ callError: 'Failed to join a call: ' + e });
@@ -227,17 +230,17 @@ export default class MakeCall extends React.Component {
     joinTeamsMeeting = async (withVideo) => {
         try {
             const callOptions = await this.getCallOptions(withVideo);
-            if (this.meetingLink.value && !this.messageId.value && !this.threadId.value && this.tenantId && this.organizerId) {
-                this.callAgent.join({ meetingLink: this.meetingLink.value }, callOptions);
+            if (this.state.meetingLink && !this.state.messageId && !this.state.threadId && this.state.tenantId && this.state.organizerId) {
+                this.callAgent.join({ meetingLink: this.state.meetingLink }, callOptions);
 
-            } else if (this.meetingId.value && !this.meetingLink.value && !this.messageId.value && !this.threadId.value && this.tenantId && this.organizerId) {
-                this.callAgent.join({ meetingId: this.meetingId.value }, callOptions);
-            } else if (!this.meetingLink.value && this.messageId.value && this.threadId.value && this.tenantId && this.organizerId) {
+            } else if (this.state.meetingId && !this.state.meetingLink && !this.state.messageId && !this.state.threadId && this.state.tenantId && this.state.organizerId) {
+                this.callAgent.join({ meetingId: this.state.meetingId }, callOptions);
+            } else if (!this.state.meetingLink && this.state.messageId && this.state.threadId && this.state.tenantId && this.state.organizerId) {
                 this.callAgent.join({
-                    messageId: this.messageId.value,
-                    threadId: this.threadId.value,
-                    tenantId: this.tenantId.value,
-                    organizerId: this.organizerId.value
+                    messageId: this.state.messageId,
+                    threadId: this.state.threadId,
+                    tenantId: this.state.tenantId,
+                    organizerId: this.state.organizerId
                 }, callOptions);
             } else {
                 throw new Error('Please enter Teams meeting link or Teams meeting coordinate');
@@ -405,19 +408,21 @@ export default class MakeCall extends React.Component {
                                 <TextField
                                     disabled={this.state.call || !this.state.loggedIn}
                                     label="Destination Identity or Identities"
-                                    componentRef={(val) => this.destinationUserIds = val} />
+                                    defaultValue={this.state.destinationUserIds}
+                                    onChange={(event) => this.setState({ destinationUserIds: event.target.value })} />
                                 <div className="ms-Grid-row mb-3 mt-3" style={{display: 'flex', flexDirection: 'row'}}>
                                     <div className="ms-Grid-col ms-lg6 ms-sm12" style={{marginTop: 'auto'}}>
                                         <TextField
                                             disabled={this.state.call || !this.state.loggedIn}
                                             label="Destination Phone Identity or Phone Identities"
-                                            componentRef={(val) => this.destinationPhoneIds = val} />
+                                            defaultValue={this.state.destinationPhoneIds}
+                                            onChange={(event) => this.setState({ destinationPhoneIds: event.target.value })} />
                                     </div>
-                                    <div className="ms-Grid-col ms-lg6 ms-sm12" style={{marginTop: 'auto'}}>
-                                        <TextField
+                                    <div className="ms-Grid-col ms-lg6 ms-sm12 alternate-id-field" style={{marginTop: 'auto'}}>
+                                        <AlternateCallerIdPicker
                                             disabled={this.state.call || !this.state.loggedIn}
                                             label="Alternate Caller Id (For calling phone numbers only)"
-                                            componentRef={(val) => this.alternateCallerId = val} />
+                                            onChange={(value) => this.setState({ alternateCallerId: value })} />
                                     </div>
                                 </div>
                                 <PrimaryButton
@@ -443,8 +448,8 @@ export default class MakeCall extends React.Component {
                                     disabled={this.state.call || !this.state.loggedIn}
                                     label="Group Id"
                                     placeholder="29228d3e-040e-4656-a70e-890ab4e173e5"
-                                    defaultValue="29228d3e-040e-4656-a70e-890ab4e173e5"
-                                    componentRef={(val) => this.destinationGroup = val} />
+                                    defaultValue={this.state.destinationGroup}
+                                    onChange={(event) => this.setState({ destinationGroup: event.target.value })} />
                                 <PrimaryButton
                                     className="primary-button"
                                     iconProps={{ iconName: 'Group', style: { verticalAlign: 'middle', fontSize: 'large' } }}
@@ -466,26 +471,26 @@ export default class MakeCall extends React.Component {
                                 <TextField className="mb-3"
                                     disabled={this.state.call || !this.state.loggedIn}
                                     label="Meeting link"
-                                    componentRef={(val) => this.meetingLink = val} />
+                                    onChange={(event) => this.setState({ meetingLink: event.target.value })} />
                                 <div>Or enter meeting id</div>
                                 <TextField className="mb-3"
                                     disabled={this.state.call || !this.state.loggedIn}
                                     label="Meeting id"
-                                    componentRef={(val) => this.meetingId = val} />
+                                    onChange={(event) => this.setState({ meetingId: event.target.value })} />
                                 <div> Or enter meeting coordinates (Thread Id, Message Id, Organizer Id, and Tenant Id)</div>
                                 <TextField disabled={this.state.call || !this.state.loggedIn}
                                     label="Thread Id"
-                                    componentRef={(val) => this.threadId = val} />
+                                    onChange={(event) => this.setState({ threadId: event.target.value })} />
                                 <TextField disabled={this.state.call || !this.state.loggedIn}
                                     label="Message Id"
-                                    componentRef={(val) => this.messageId = val} />
+                                    onChange={(event) => this.setState({ messageId: event.target.value })} />
                                 <TextField disabled={this.state.call || !this.state.loggedIn}
                                     label="Organizer Id"
-                                    componentRef={(val) => this.organizerId = val} />
+                                    onChange={(event) => this.setState({ organizerId: event.target.value })} />
                                 <TextField className="mb-3"
                                     disabled={this.state.call || !this.state.loggedIn}
                                     label="Tenant Id"
-                                    componentRef={(val) => this.tenantId = val} />
+                                    onChange={(event) => this.setState({ tenantId: event.target.value })} />
                                 <PrimaryButton className="primary-button"
                                     iconProps={{ iconName: 'Group', style: { verticalAlign: 'middle', fontSize: 'large' } }}
                                     text="Join Teams meeting"

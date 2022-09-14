@@ -244,6 +244,31 @@ ul {
   box-shadow: 0px 0px 0px 2px #292827;
 }
 
+
+.alternateIdPicker > label {
+  color: #edebe9;
+  font-weight: 400;
+  font-size: 12px;;
+}
+
+.ms-BasePicker-input:disabled, .alternateIdPicker.is-disabled > label {
+  color: #484644;
+}
+
+.ms-BasePicker-input {
+  background-color: #292827;
+  color: #edebe9;
+  outline: 1px solid #484644;
+  box-shadow: 0px 0px 0px 2px #484644;
+}
+
+.ms-BasePicker-input:disabled {
+  background-color: #292827;
+  color: #484644 !important;
+  outline: 1px solid #292827;
+  box-shadow: 0px 0px 0px 2px #292827;
+}
+
 .video-grid-row, .custom-row {
   display: flex;
   flex-direction: row;

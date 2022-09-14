@@ -12,12 +12,12 @@ export default class Login extends React.Component {
     constructor(props) {
         super(props);
         this.userDetailsResponse = undefined;
-        this.displayName = undefined;
-        this.clientTag = uuid();
         this.state = {
             showSpinner: false,
             disableInitializeButton: false,
-            loggedIn: false
+            loggedIn: false,
+            displayName: '',
+            clientTag: uuid()
         }
     }
 
@@ -26,7 +26,7 @@ export default class Login extends React.Component {
             this.setState({ showSpinner: true, disableInitializeButton: true });
             this.userDetailsResponse = await utils.provisionNewUser();
             this.setState({ id: utils.getIdentifierText(this.userDetailsResponse.user) });
-            await this.props.onLoggedIn({ id: this.state.id, token: this.userDetailsResponse.token, displayName: this.displayName, clientTag: this.clientTag });
+            await this.props.onLoggedIn({ id: this.state.id, token: this.userDetailsResponse.token, displayName: this.state.displayName, clientTag: this.state.clientTag });
             this.setState({ loggedIn: true });
         } catch (error) {
             console.log(error);
@@ -58,7 +58,7 @@ export default class Login extends React.Component {
                         <br></br>
                         <div>Congrats! You've provisioned an ACS user identity and initialized the ACS Calling Client Web SDK. You are ready to start making calls!</div>
                         <div>The Identity you've provisioned is: <span className="identity"><b>{this.state.id}</b></span></div>
-                        <div>Usage is tagged with: <span className="identity"><b>{this.clientTag}</b></span></div>
+                        <div>Usage is tagged with: <span className="identity"><b>{this.state.clientTag}</b></span></div>
                     </div>
                 }
                 {
@@ -76,11 +76,11 @@ export default class Login extends React.Component {
                                 <TextField className="mt-3"
                                             defaultValue={undefined}
                                             label="Optional display name"
-                                            onChange={(e) => { this.displayName = e.target.value }} />
+                                            onChange={(e) => this.setState({ displayName: e.target.value })} />
                                 <TextField className="mt-3"
-                                            defaultValue={this.clientTag}
+                                            defaultValue={this.state.clientTag}
                                             label="Optional: Tag this usage session"
-                                            onChange={(e) => { this.clientTag = e.target.value }} />
+                                            onChange={(e) => this.setState({ clientTag: e.target.value })} />
                             </div>
                         </div>
                         <div className="mt-1">
