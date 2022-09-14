@@ -41,7 +41,7 @@ const AlternateCallerIdPicker = ({ disabled, label, onChange }) => {
                     suggestionsHeaderText: 'Suggested Phone Numbers',
                     onResultsFoundText: 'Press enter to add'
                 }}
-                onChange={(items) => onChange(items[0].name)}
+                onChange={(items) => onChange(items.length > 0 ? items[0].name : '')}
                 getTextFromItem={(item) => item.name}
                 disabled={disabled}
                 itemLimit={1}
