@@ -8,6 +8,7 @@ namespace PSTNServerApp.Controllers
 {
     using Azure.Communication;
     using Azure.Communication.CallingServer;
+    using Azure.Communication.Identity;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
 
@@ -22,8 +23,9 @@ namespace PSTNServerApp.Controllers
     {
 
         private readonly CallAutomationClient callClient;
+        private readonly CommunicationIdentityClient identityClient;
         private readonly AppOptions appOptions;
-        private Dictionary<string, string> phoneNumberToMriMap = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> phoneNumberToMriMap = new Dictionary<string, string>();
         private readonly ILogger<CallController> logger;
 
         /// <summary>
@@ -35,7 +37,8 @@ namespace PSTNServerApp.Controllers
         {
             this.appOptions = appOptions;
             this.logger = logger;
-            callClient = new CallAutomationClient(appOptions.ConnectionString);
+            this.callClient = new CallAutomationClient(appOptions.ConnectionString);
+            this.identityClient = new CommunicationIdentityClient(appOptions.ConnectionString);
         }
 
         /// <summary>
@@ -52,6 +55,14 @@ namespace PSTNServerApp.Controllers
                 $"{{\"connectionString\": \"{appOptions.ConnectionString}\"}}",
                 System.Net.Mime.MediaTypeNames.Application.Json,
                 System.Text.Encoding.UTF8);
+        }
+
+        [HttpPost("/provisionUser")]
+        public IActionResult OnProvisionUserRequest([FromBody] UserInfo userInfo = default)
+        {
+            var list = new List<CommunicationTokenScope>();
+            list.Add(CommunicationTokenScope.VoIP);
+            var user = identityClient.CreateUserAndToken(list);
         }
 
         /// <summary>
