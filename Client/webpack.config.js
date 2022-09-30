@@ -62,13 +62,15 @@ module.exports = {
     port: PORT,
     proxy: [
       {
-        path: "/tokens/provisionUser",
-        target: "http://[::1]:8080",
+        path: "/connectionString",
+        target: "https://[::1]:44393",
+        secure: false
       },
       {
-        path: "/connectionString",
-        target: "http://[::1]:8080",
-      },
+        path: "/configure",
+        target: "https://[::1]:44393",
+        secure: false
+      }n
     ],
   },
 };

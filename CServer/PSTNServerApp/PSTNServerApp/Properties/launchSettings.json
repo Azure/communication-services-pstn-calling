@@ -1,0 +1,26 @@
+{
+  "profiles": {
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ConnectionString": "endpoint=https:/communicationservices-calling-example.communication.azure.com/;accesskey=Xx4UlE4VE0nOLBzzrSFJXiU2FU8XyBfo5cMEFA7lTPstAbXbqKX2lM/tMXOd4Ys601sM42VJgXfMOHc6WZJLMA=="
+      }
+    },
+    "PSTNServerApp": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5002"
+    }
+  },
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:16913",
+      "sslPort": 44393
+    }
+  }
+}

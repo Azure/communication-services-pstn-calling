@@ -350,7 +350,9 @@ ul {
 .d-flex {
   display: flex !important;
 }
-
+.f-row {
+  flex-direction: row;
+}
 /*********************************
 *        Width and Height        *
 *********************************/

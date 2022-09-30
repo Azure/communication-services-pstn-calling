@@ -210,7 +210,6 @@ const DirectRouting = (props) => {
             } else {
                 setDialogMessage('Unknown error occurred.');
             }
-            debugger; 
         }
         setUploading(false);
         setShowUploadedDialog(true);

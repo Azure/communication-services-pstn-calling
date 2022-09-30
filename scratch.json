@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "appName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the AppService to create."
+        }
+      },
+      "sku": {
+        "type": "string",
+        "defaultValue": "F1",
+        "metadata": {
+          "description": "The SKU of App Service Plan."
+        }
+      }
+    },
+    "variables": {
+      "appServicePlanPortalName": "[format('AppServicePlan-{0}', parameters('appName'))]",
+      "packageUrl": "https://tsandervstorage.blob.core.windows.net/data/dist.zip",
+      "communicationServicesResourceId": "/subscriptions/3029ff8e-d089-44b8-a90f-438a265a960b/resourceGroups/t-sanderv/providers/Microsoft.Communication/communicationServices/CommunicationServices-calling-example",
+      "location": "[resourceGroup().location]"
+    },
+    "resources": [
+      {
+        "type": "Microsoft.Web/sites/config",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/{1}', parameters('appName'), 'appsettings')]",
+        "properties": {
+          "ResourceConnectionString": "[listkeys(variables('communicationServicesResourceId'), '2020-08-20').primaryConnectionString]",
+          "WEBSITE_NODE_DEFAULT_VERSION": "~14"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+        ]
+      },
+      {
+        "type": "Microsoft.Web/sites/extensions",
+        "apiVersion": "2022-03-01",
+        "name": "[format('{0}/{1}', parameters('appName'), 'MSDeploy')]",
+        "properties": {
+          "packageUri": "[variables('packageUrl')]"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites/config', parameters('appName'), 'appsettings')]",
+          "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
+        ]
+      },
+      {
+        "type": "Microsoft.Web/serverfarms",
+        "apiVersion": "2022-03-01",
+        "name": "[variables('appServicePlanPortalName')]",
+        "location": "[variables('location')]",
+        "sku": {
+          "name": "[parameters('sku')]"
+        },
+        "properties": {}
+      },
+      {
+        "type": "Microsoft.Web/sites",
+        "apiVersion": "2022-03-01",
+        "name": "[parameters('appName')]",
+        "location": "[variables('location')]",
+        "properties": {
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanPortalName'))]"
+        ]
+      }
+    ]
+  }

@@ -21,6 +21,7 @@ import * as codeSamples from './CodeSamples';
 import Card from './Card';
 import DirectRouting from './DirectRoutes/DirectRouting';
 import AlternateCallerIdPicker from './AlternateCallerIdPicker';
+import InboundCallingInput from './InboundCallingInput';
 
 export default class MakeCall extends React.Component {
     constructor(props) {
@@ -37,7 +38,7 @@ export default class MakeCall extends React.Component {
             id: undefined,
             loggedIn: false,
             call: undefined,
-            incomingCall: undefined,
+            incomingCall: false,
             selectedCameraDeviceId: null,
             selectedSpeakerDeviceId: null,
             selectedMicrophoneDeviceId: null,
@@ -58,7 +59,8 @@ export default class MakeCall extends React.Component {
             threadId: '',
             messageId: '',
             organizerId: '',
-            tenantId: ''
+            tenantId: '',
+            mri: '',
         };
 
         setInterval(() => {
@@ -95,7 +97,7 @@ export default class MakeCall extends React.Component {
                 window.callAgent = this.callAgent;
                 this.deviceManager = await this.callClient.getDeviceManager();
                 const permissions = await this.deviceManager.askDevicePermission({ audio: true, video: true });
-                this.setState({permissions: permissions});
+                this.setState({ permissions: permissions, mri: userDetails.mri });
 
                 this.callAgent.on('callsUpdated', e => {
                     console.log(`callsUpdated, added=${e.added}, removed=${e.removed}`);
@@ -190,7 +192,6 @@ export default class MakeCall extends React.Component {
             const callOptions = await this.getCallOptions(withVideo);
 
             if (this.state.alternateCallerId !== '') {
-                debugger;
                 callOptions.alternateCallerId = { phoneNumber: this.state.alternateCallerId.trim() };
             }
 
@@ -410,15 +411,15 @@ export default class MakeCall extends React.Component {
                                     label="Destination Identity or Identities"
                                     defaultValue={this.state.destinationUserIds}
                                     onChange={(event) => this.setState({ destinationUserIds: event.target.value })} />
-                                <div className="ms-Grid-row mb-3 mt-3" style={{display: 'flex', flexDirection: 'row'}}>
-                                    <div className="ms-Grid-col ms-lg6 ms-sm12" style={{marginTop: 'auto'}}>
+                                <div className="ms-Grid-row mb-3 mt-3 d-flex f-row">
+                                    <div className="ms-Grid-col ms-lg6 ms-sm12 mt-auto">
                                         <TextField
                                             disabled={this.state.call || !this.state.loggedIn}
                                             label="Destination Phone Identity or Phone Identities"
                                             defaultValue={this.state.destinationPhoneIds}
                                             onChange={(event) => this.setState({ destinationPhoneIds: event.target.value })} />
                                     </div>
-                                    <div className="ms-Grid-col ms-lg6 ms-sm12 alternate-id-field" style={{marginTop: 'auto'}}>
+                                    <div className="ms-Grid-col ms-lg6 ms-sm12 alternate-id-field mt-auto">
                                         <AlternateCallerIdPicker
                                             disabled={this.state.call || !this.state.loggedIn}
                                             label="Alternate Caller Id (For calling phone numbers only)"
@@ -441,29 +442,35 @@ export default class MakeCall extends React.Component {
                                 </PrimaryButton>
                             </div>
                             <div className="call-input-panel mb-5 ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl4">
-                                <h3 className="mb-1">Join a group call</h3>
-                                <div>Group Id must be in GUID format.</div>
-                                <TextField
-                                    className="mb-3"
-                                    disabled={this.state.call || !this.state.loggedIn}
-                                    label="Group Id"
-                                    placeholder="29228d3e-040e-4656-a70e-890ab4e173e5"
-                                    defaultValue={this.state.destinationGroup}
-                                    onChange={(event) => this.setState({ destinationGroup: event.target.value })} />
-                                <PrimaryButton
-                                    className="primary-button"
-                                    iconProps={{ iconName: 'Group', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                    text="Join group call"
-                                    disabled={this.state.call || !this.state.loggedIn}
-                                    onClick={() => this.joinGroup(false)}>
-                                </PrimaryButton>
-                                <PrimaryButton
-                                    className="primary-button"
-                                    iconProps={{ iconName: 'Video', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                    text="Join group call with video"
-                                    disabled={this.state.call || !this.state.loggedIn}
-                                    onClick={() => this.joinGroup(true)}>
-                                </PrimaryButton>
+                                <div className="ms-Grid-row">
+                                    <h3 className="mb-1">Join a group call</h3>
+                                    <div>Group Id must be in GUID format.</div>
+                                    <TextField
+                                        className="mb-3"
+                                        disabled={this.state.call || !this.state.loggedIn}
+                                        label="Group Id"
+                                        placeholder="29228d3e-040e-4656-a70e-890ab4e173e5"
+                                        defaultValue={this.state.destinationGroup}
+                                        onChange={(event) => this.setState({ destinationGroup: event.target.value })} />
+                                    <PrimaryButton
+                                        className="primary-button"
+                                        iconProps={{ iconName: 'Group', style: { verticalAlign: 'middle', fontSize: 'large' } }}
+                                        text="Join group call"
+                                        disabled={this.state.call || !this.state.loggedIn}
+                                        onClick={() => this.joinGroup(false)}>
+                                    </PrimaryButton>
+                                    <PrimaryButton
+                                        className="primary-button"
+                                        iconProps={{ iconName: 'Video', style: { verticalAlign: 'middle', fontSize: 'large' } }}
+                                        text="Join group call with video"
+                                        disabled={this.state.call || !this.state.loggedIn}
+                                        onClick={() => this.joinGroup(true)}>
+                                    </PrimaryButton>
+                                </div>
+                                <InboundCallingInput 
+                                    mri={this.state.mri}
+                                    disabled={this.state.call || !this.state.loggedIn} 
+                                    />
                             </div>
                             <div className="call-input-panel mb-5 ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl4">
                                 <h3 className="mb-1">Join a Teams meeting</h3>

@@ -8,6 +8,8 @@ import {
     isUnknownIdentifier
 } from '@azure/communication-common';
 
+let connectionString = {};
+
 export const utils = {
     getAppServiceUrl: () => {
         return window.location.origin;
@@ -25,7 +27,6 @@ export const utils = {
         if (response.ok) {
             return response.json();
         }
-
         throw new Error('Invalid token response');
     },
     getIdentifierText: (identifier) => {
@@ -69,6 +70,9 @@ export const utils = {
         }
     },
     getConnectionString: async () => {
+        if (Object.keys(connectionString).length > 0) {
+            return connectionString;
+        }
         let response = await fetch('/connectionString', {
             method: 'GET',
             headers: {
@@ -78,9 +82,26 @@ export const utils = {
         });
 
         if (response.ok) {
-            return response.json();
+            connectionString = response.json();
+            return connectionString;
         }
-
         throw new Error('Invalid connectionString response');
+    },
+    registerInboundPhoneNumber: async (phoneNumber, mri) => {
+        let response = await fetch('/configure?'  + new URLSearchParams({
+            phoneNumber,
+            mri
+        }), {
+            method: 'POST',
+            body: '',
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            }
+        })
+
+        if (!response.ok) {
+            throw new Error('Could not link phone number to this application.');
+        }
     }
 }
