@@ -4,7 +4,7 @@
       "commandName": "IISExpress",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionString": "endpoint=https:/communicationservices-calling-example.communication.azure.com/;accesskey=Xx4UlE4VE0nOLBzzrSFJXiU2FU8XyBfo5cMEFA7lTPstAbXbqKX2lM/tMXOd4Ys601sM42VJgXfMOHc6WZJLMA=="
+        "ConnectionString": ""
       }
     },
     "PSTNServerApp": {
