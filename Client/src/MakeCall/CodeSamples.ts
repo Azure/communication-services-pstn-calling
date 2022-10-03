@@ -476,5 +476,5 @@ export {
   holdUnholdSampleCode,
   deviceManagerSampleCode,
   userProvisioningAndSdkInitializationCode,
-  directRoutingCode,
+  directRoutingCode
 };

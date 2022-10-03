@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-const HtmlWebPackPlugin = require("html-webpack-plugin");
-const path = require("path");
+const HtmlWebPackPlugin = require('html-webpack-plugin');
+const path = require('path');
 
 const env = process.env;
 env.development = true;
@@ -12,19 +12,18 @@ const PORT = env.port || 9000;
 const isProd =
   env.development == null ||
   !env.development ||
-  env.development == "false" ||
-  (env.production != null &&
-    (env.production == true || env.production == "true"));
+  env.development == 'false' ||
+  (env.production != null && (env.production == true || env.production == 'true'));
 
 module.exports = (env) => ({
-  devtool: "eval-source-map",
-  entry: "./src/index.tsx",
+  devtool: 'eval-source-map',
+  entry: './src/index.tsx',
   output: {
-    path: path.join(__dirname, "dist/build"),
-    filename: "build.js",
+    path: path.join(__dirname, 'dist/build'),
+    filename: 'build.js'
   },
   resolve: {
-    extensions: [".js", ".jsx", ".ts", ".tsx"],
+    extensions: ['.js', '.jsx', '.ts', '.tsx']
   },
   module: {
     rules: [
@@ -33,28 +32,28 @@ module.exports = (env) => ({
         exclude: [/dist/, /node_modules/],
         loader: 'ts-loader',
         options: {
-          transpileOnly: true,
+          transpileOnly: true
         }
       },
       {
         test: /\.html$/,
         use: [
           {
-            loader: "html-loader",
-          },
-        ],
+            loader: 'html-loader'
+          }
+        ]
       },
       {
         test: /\.css$/,
-        use: ["style-loader", "css-loader"],
-      },
-    ],
+        use: ['style-loader', 'css-loader']
+      }
+    ]
   },
   plugins: [
     new HtmlWebPackPlugin({
-      template: "./public/index.html",
-      filename: "./index.html",
-    }),
+      template: './public/index.html',
+      filename: './index.html'
+    })
   ],
   devServer: {
     open: true,
@@ -62,15 +61,15 @@ module.exports = (env) => ({
     port: PORT,
     proxy: [
       {
-        path: "/connectionString",
-        target: "https://[::1]:44393",
+        path: '/connectionString',
+        target: 'https://[::1]:44393',
         secure: false
       },
       {
-        path: "/configure",
-        target: "https://[::1]:44393",
+        path: '/configure',
+        target: 'https://[::1]:44393',
         secure: false
       }
-    ],
-  },
+    ]
+  }
 });

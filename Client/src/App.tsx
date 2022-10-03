@@ -3,20 +3,19 @@
 
 import React from 'react';
 import './App.css';
-import MakeCall from './MakeCall/MakeCall'
+import MakeCall from './MakeCall/MakeCall';
 import { initializeIcons } from '@uifabric/icons';
 
-const rawCallingSdkVersion = require('../package.json').dependencies['@azure/communication-calling']
+const rawCallingSdkVersion = require('../package.json').dependencies['@azure/communication-calling'];
 
 // Discard the first character of the version string if it contains a tilde or a caret
 const callingSdkVersion = rawCallingSdkVersion
-    .substring(rawCallingSdkVersion.indexOf('^') + 1)
-    .substring(rawCallingSdkVersion.indexOf('~') + 1);
+  .substring(rawCallingSdkVersion.indexOf('^') + 1)
+  .substring(rawCallingSdkVersion.indexOf('~') + 1);
 
 initializeIcons();
 
 function App() {
-
   return (
     <div className="App">
       <div className="header ms-Grid">
