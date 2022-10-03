@@ -17,7 +17,7 @@ import Login from './Login';
 import { setLogLevel, AzureLogger } from '@azure/logger';
 import * as codeSamples from './CodeSamples';
 import Card from './Card';
-import DirectRouting from './DirectRoutes/DirectRouting';
+import DirectRouting from './DirectRouting/DirectRouting';
 import AlternateCallerIdPicker from './AlternateCallerIdPicker';
 import InboundCallingInput from './InboundCallingInput';
 import { CommunicationUserToken } from "@azure/communication-identity";
@@ -44,15 +44,8 @@ const MakeCall: React.FC = () => {
     const [microphoneDeviceOptions, setMicrophoneDeviceOptions] = React.useState<AudioDeviceInfo[]>([]);
     const [deviceManagerWarning, setDeviceManagerWarning] = React.useState<string>('');
     const [destinationPhoneIds, setDestinationPhoneIds] = React.useState<string>('');
-    const [destinationUserIds, setDestinationUserIds] = React.useState<string>('');
     const [alternateCallerId, setAlternateCallerId] = React.useState<string>('');
     const [destinationGroup, setDestinationGroup] = React.useState<string>('29228d3e-040e-4656-a70e-890ab4e173e5');
-    const [meetingLink, setMeetingLink] = React.useState<string>('');
-    const [meetingId, setMeetingId] = React.useState<string>('');
-    const [threadId, setThreadId] = React.useState<string>('');
-    const [messageId, setMessageId] = React.useState<string>('');
-    const [organizerId, setOrganizerId] = React.useState<string>('');
-    const [tenantId, setTenantId] = React.useState<string>('');
     const [mri, setMri] = React.useState<string>('');
 
 
@@ -143,14 +136,9 @@ const MakeCall: React.FC = () => {
     const placeCall = async () => {
         try {
             // Turn all destinationUserIds and destinationPhoneIds into the right interfaces
-            const identitiesToCall: (PhoneNumberIdentifier | CommunicationUserIdentifier | UnknownIdentifier)[] = [
-                ...[...new Set(destinationUserIds.split(',').filter(userId => userId != null && userId.length > 0)
-                .map(userId => userId.trim()))]
-                .map(userId => userId == '8:echo123' ? { id: userId } : { communicationUserId: userId }),
-
-                ...[...new Set(destinationPhoneIds.split(',').map(phoneId => phoneId.trim()))]
-                .map(phoneId => ({phoneNumber: phoneId}))
-            ];
+            const identitiesToCall: (PhoneNumberIdentifier | CommunicationUserIdentifier | UnknownIdentifier)[] = 
+                [...new Set(destinationPhoneIds.split(',').map(phoneId => phoneId.trim()))]
+                .map(phoneId => ({phoneNumber: phoneId}));
 
             const callOptions: StartCallOptions = await getCallOptions();
 
@@ -189,29 +177,6 @@ const MakeCall: React.FC = () => {
             setCallError(`Failed to join a call: ${error}`);
         }
     };
-
-    const joinTeamsMeeting = async () => {
-        try {
-            const callOptions = await getCallOptions();
-            if (meetingLink && !messageId && !threadId && tenantId && organizerId) {
-                callAgent.join({ meetingLink }, callOptions);
-            } else if (meetingId && !meetingLink && !messageId && !threadId && tenantId && organizerId) {
-                callAgent.join({ meetingId: meetingId }, callOptions);
-            } else if (!meetingLink && messageId && threadId && tenantId && organizerId) {
-                callAgent.join({
-                    messageId: messageId,
-                    threadId: threadId,
-                    tenantId: tenantId,
-                    organizerId: organizerId
-                }, callOptions);
-            } else {
-                throw new Error('Please enter Teams meeting link or Teams meeting coordinate');
-            }
-        } catch (error) {
-            console.error('Failed to join teams meeting:', error);
-            setCallError(`Failed to join teams meeting: ${error}`);
-        }
-    }
 
     const getCallOptions = async (): Promise<AcceptCallOptions> => {
         let callOptions: AcceptCallOptions = { audioOptions: { muted: false }};
@@ -348,11 +313,6 @@ const MakeCall: React.FC = () => {
                             <div>Enter an Identity to make a call to.</div>
                             <div>You can specify multiple Identities to call by using "," separated values.</div>
                             <div>If calling a Phone Identity, your Alternate Caller Id must be specified. </div>
-                            <TextField
-                                disabled={call || !loggedIn}
-                                label="Destination Identity or Identities"
-                                defaultValue={destinationUserIds}
-                                onChange={(event) => setDestinationUserIds((event.target as HTMLTextAreaElement).value)} />
                             <div className="ms-Grid-row mb-3 mt-3 d-flex f-row">
                                 <div className="ms-Grid-col ms-lg6 ms-sm12 mt-auto">
                                     <TextField
@@ -384,74 +344,10 @@ const MakeCall: React.FC = () => {
                             </PrimaryButton>
                         </div>
                         <div className="call-input-panel mb-5 ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl4">
-                            <div className="ms-Grid-row">
-                                <h3 className="mb-1">Join a group call</h3>
-                                <div>Group Id must be in GUID format.</div>
-                                <TextField
-                                    className="mb-3"
-                                    disabled={call || !loggedIn}
-                                    label="Group Id"
-                                    placeholder="29228d3e-040e-4656-a70e-890ab4e173e5"
-                                    defaultValue={destinationGroup}
-                                    onChange={(event) => setDestinationGroup((event.target as HTMLTextAreaElement).value)} />
-                                <PrimaryButton
-                                    className="primary-button"
-                                    iconProps={{ iconName: 'Group', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                    text="Join group call"
-                                    disabled={call || !loggedIn}
-                                    onClick={joinGroup}>
-                                </PrimaryButton>
-                                <PrimaryButton
-                                    className="primary-button"
-                                    iconProps={{ iconName: 'Video', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                    text="Join group call with video"
-                                    disabled={call || !loggedIn}
-                                    onClick={joinGroup}>
-                                </PrimaryButton>
-                            </div>
                             <InboundCallingInput 
                                 mri={mri}
                                 disabled={call || !loggedIn} 
                                 />
-                        </div>
-                        <div className="call-input-panel mb-5 ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl4">
-                            <h3 className="mb-1">Join a Teams meeting</h3>
-                            <div>Enter meeting link</div>
-                            <TextField className="mb-3"
-                                disabled={call || !loggedIn}
-                                label="Meeting link"
-                                onChange={(event) => setMeetingLink((event.target as HTMLTextAreaElement).value)} />
-                            <div>Or enter meeting id</div>
-                            <TextField className="mb-3"
-                                disabled={call || !loggedIn}
-                                label="Meeting id"
-                                onChange={(event) => setMeetingId((event.target as HTMLTextAreaElement).value)} />
-                            <div> Or enter meeting coordinates (Thread Id, Message Id, Organizer Id, and Tenant Id)</div>
-                            <TextField disabled={call || !loggedIn}
-                                label="Thread Id"
-                                onChange={(event) => setThreadId((event.target as HTMLTextAreaElement).value)} />
-                            <TextField disabled={call || !loggedIn}
-                                label="Message Id"
-                                onChange={(event) => setMessageId((event.target as HTMLTextAreaElement).value)} />
-                            <TextField disabled={call || !loggedIn}
-                                label="Organizer Id"
-                                onChange={(event) => setOrganizerId((event.target as HTMLTextAreaElement).value)} />
-                            <TextField className="mb-3"
-                                disabled={call || !loggedIn}
-                                label="Tenant Id"
-                                onChange={(event) => setTenantId((event.target as HTMLTextAreaElement).value)} />
-                            <PrimaryButton className="primary-button"
-                                iconProps={{ iconName: 'Group', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                text="Join Teams meeting"
-                                disabled={call || !loggedIn}
-                                onClick={joinTeamsMeeting}>
-                            </PrimaryButton>
-                            <PrimaryButton className="primary-button"
-                                iconProps={{ iconName: 'Video', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                                text="Join Teams meeting with video"
-                                disabled={call || !loggedIn}
-                                onClick={joinTeamsMeeting}>
-                            </PrimaryButton>
                         </div>
                     </div>
                 }
@@ -476,51 +372,6 @@ const MakeCall: React.FC = () => {
             </Card>
             <Card title='Configure Direct Routing' showCodeIconName='BranchMerge' code={codeSamples.directRoutingCode}>
                 <DirectRouting />
-            </Card>
-            <Card title='Video, Screen sharing, and local video preview' showCodeIconName='Video' code={codeSamples.streamingSampleCode}>
-                <h3>
-                    Video - try it out.
-                </h3>
-                <div>
-                    From your current call, toggle your video on and off by clicking on the <Icon className="icon-text-xlarge" iconName="Video" /> icon.
-                    When you start you start your video, remote participants can see your video by receiving a stream and rendering it in an HTML element.
-                </div>
-                <br></br>
-                <h3>
-                    Screen sharing - try it out.
-                </h3>
-                <div>
-                    From your current call, toggle your screen sharing on and off by clicking on the <Icon className="icon-text-xlarge" iconName="TVMonitor" /> icon.
-                    When you start sharing your screen, remote participants can see your screen by receiving a stream and rendering it in an HTML element.
-                </div>
-            </Card>
-            <Card title='Mute / Unmute' showCodeIconName='Microphone' code={codeSamples.muteUnmuteSampleCode}>
-                <h3>
-                        Try it out.
-                    </h3>
-                    <div>
-                        From your current call, toggle your microphone on and off by clicking on the <Icon className="icon-text-xlarge" iconName="Microphone" /> icon.
-                        When you mute or unmute your microphone, remote participants can receive an event about wether your micrphone is muted or unmuted.
-                    </div>
-            </Card>
-
-            <Card title='Hold / Unhold' showCodeIconName='Play' code={codeSamples.holdUnholdSampleCode}>
-                <h3>
-                    Try it out.
-                </h3>
-                <div>
-                    From your current call, toggle hold call and unhold call on by clicking on the <Icon className="icon-text-xlarge" iconName="Play" /> icon.
-                    When you hold or unhold the call, remote participants can receive other participant state changed events. Also, the call state changes.
-                </div>
-            </Card>
-            <Card title='Device Manager' code={codeSamples.deviceManagerSampleCode} showCodeIconName='Settings'>
-                <h3>
-                    Try it out.
-                </h3>
-                <div>
-                    From your current call, click on the <Icon className="icon-text-xlarge" iconName="Settings" /> icon to open up the settings panel.
-                    The DeviceManager is used to select the devices (camera, microphone, and speakers) to use across the call stack and to preview your camera.
-                </div>
             </Card>
         </div>
     );
