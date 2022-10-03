@@ -57,7 +57,6 @@ type DirectRoutingPropsType = {
 const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabled, className, style }) => {
     // Whether the Trunks (true) or the VoiceRoutes (false) are being edited
     const [isEditingTrunks, setEditingTrunks] = React.useState<boolean>(true);
-    const [disabled, setDisabled] = React.useState<boolean>(propsDisabled != null && propsDisabled);
     const [isDownloading, setDownloading] = React.useState<boolean>(true);
     const [isUploading, setUploading] = React.useState<boolean>(false);
     const [showUploadedDialog, setShowUploadedDialog] = React.useState<boolean>(false);
@@ -75,6 +74,7 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
     // Check whether errors exist in the data.
     const isTrunksFaulty = nonEmptyTrunks.filter(({errors}) => errors && Object.keys(errors).length > 0).length > 0;
     const isVoicesRoutesFaulty = nonEmptyVoiceRoutes.filter(({errors}) => errors && Object.keys(errors).length > 0).length > 0
+    const disabled = (propsDisabled != null || propsDisabled) || isUploading || isDownloading
 
     /**
      * Update a change to any Trunk field to the local Trunk variable.
@@ -192,7 +192,7 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
         const routes: SipTrunkRoute[] = nonEmptyVoiceRoutes.map(({ name, numberPattern, trunks }) => ({ name, numberPattern, trunks }));
 
         try {
-            await sipClient.setRoutes([]);
+            // TODO enable await sipClient.setRoutes([]);
             await sipClient.setTrunks(trunks);
             await sipClient.setRoutes(routes);
             setDialogTitle('Upload Successful');
@@ -252,13 +252,6 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
     React.useEffect(() => {
         downloadData()
     }, []);
-
-    // Update the disabled field when the loading status changes.
-    React.useLayoutEffect(() => 
-        setDisabled(propsDisabled == null || propsDisabled || isUploading || isDownloading), 
-        [propsDisabled, isUploading, isDownloading]
-    );
-
     return (
         <div className={className} style={style}>
             <div className="ms-Grid-row mt-3">
