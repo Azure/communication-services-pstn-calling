@@ -57,13 +57,14 @@ namespace PSTNServerApp.Controllers
                 System.Text.Encoding.UTF8);
         }
 
-        [HttpPost("/provisionUser")]
-        public IActionResult OnProvisionUserRequest([FromBody] UserInfo userInfo = default)
-        {
-            var list = new List<CommunicationTokenScope>();
-            list.Add(CommunicationTokenScope.VoIP);
-            var user = identityClient.CreateUserAndToken(list);
-        }
+        // [HttpPost("/provisionUser")]
+        //public IActionResult OnProvisionUserRequest([FromBody] UserInfo userInfo = default)
+        //{
+        //var list = new List<CommunicationTokenScope>();
+        //list.Add(CommunicationTokenScope.VoIP);
+        //var user = identityClient.CreateUserAndToken(list);
+        //    return JsonSerializer.Serialize(user.Value);
+        //}
 
         /// <summary>
         /// Respond to an incoming call.

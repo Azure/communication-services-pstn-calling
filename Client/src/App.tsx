@@ -29,6 +29,7 @@ function App() {
               Documentation on how to use the ACS Calling SDK for Javascript can be found on{' '}
               <a
                 className="sdk-docs-link"
+                rel="noopener noreferrer"
                 target="_blank"
                 href="https://docs.microsoft.com/en-gb/azure/communication-services/quickstarts/voice-video-calling/calling-client-samples?pivots=platform-web"
               >

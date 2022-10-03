@@ -1,20 +1,34 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { Call, RemoteParticipant } from '@azure/communication-calling';
 import {
     isCommunicationUserIdentifier,
     isPhoneNumberIdentifier,
     isMicrosoftTeamsUserIdentifier,
-    isUnknownIdentifier
+    isUnknownIdentifier,
+    CommunicationIdentifierKind,
+    MicrosoftTeamsUserKind,
+    UnknownIdentifier,
+    CommunicationUserKind,
+    PhoneNumberKind,
+    UnknownIdentifierKind
 } from '@azure/communication-common';
+import { CommunicationUserToken } from '@azure/communication-identity';
 
-let connectionString = {};
+type ConnectionStringType = {
+    connectionString: string
+}
+
+let connectionString = {
+    connectionString: '',
+};
 
 export const utils = {
-    getAppServiceUrl: () => {
+    getAppServiceUrl: (): string => {
         return window.location.origin;
     },
-    provisionNewUser: async (userId) => {
+    provisionNewUser: async (userId: string): Promise<CommunicationUserToken> => {
         let response = await fetch('/tokens/provisionUser', {
             method: 'POST',
             body: JSON.stringify({ userId }),
@@ -25,11 +39,11 @@ export const utils = {
         });
 
         if (response.ok) {
-            return response.json();
+            return await response.json();
         }
         throw new Error('Invalid token response');
     },
-    getIdentifierText: (identifier) => {
+    getIdentifierText: (identifier: CommunicationIdentifierKind): string => {
         if (isCommunicationUserIdentifier(identifier)) {
             return identifier.communicationUserId;
         } else if (isPhoneNumberIdentifier(identifier)) {
@@ -42,35 +56,35 @@ export const utils = {
             return 'Unknown Identifier';
         }
     },
-    getSizeInBytes(str) {
+    getSizeInBytes(str: string): number {
         return new Blob([str]).size;
     },
-    getRemoteParticipantObjFromIdentifier(call, identifier) {
+    getRemoteParticipantObjFromIdentifier(call: Call, identifier: CommunicationIdentifierKind): RemoteParticipant | undefined {
         switch(identifier.kind) {
             case 'communicationUser': {
-                return call.remoteParticipants.find(rm => {
-                    return rm.identifier.communicationUserId === identifier.communicationUserId
-                });
+                return call.remoteParticipants.find(rm =>
+                    (rm.identifier as CommunicationUserKind).communicationUserId === identifier.communicationUserId
+                );
             }
             case 'microsoftTeamsUser': {
-                return call.remoteParticipants.find(rm => {
-                    return rm.identifier.microsoftTeamsUserId === identifier.microsoftTeamsUserId
-                });
+                return call.remoteParticipants.find(rm =>
+                    (rm.identifier as MicrosoftTeamsUserKind).microsoftTeamsUserId === identifier.microsoftTeamsUserId
+                );
             }
             case 'phoneNumber': {
-                return call.remoteParticipants.find(rm => {
-                    return rm.identifier.phoneNumber === identifier.phoneNumber
-                });
+                return call.remoteParticipants.find(rm =>
+                    (rm.identifier as PhoneNumberKind).phoneNumber === identifier.phoneNumber
+                );
             }
             case 'unknown': {
-                return call.remoteParticipants.find(rm => {
-                    return rm.identifier.id === identifier.id
-                });
+                return call.remoteParticipants.find(rm =>
+                    (rm.identifier as UnknownIdentifierKind).id === identifier.id
+                );
             }
         }
     },
-    getConnectionString: async () => {
-        if (Object.keys(connectionString).length > 0) {
+    getConnectionString: async (): Promise<ConnectionStringType> => {
+        if (connectionString.connectionString.length > 0) {
             return connectionString;
         }
         let response = await fetch('/connectionString', {
@@ -82,12 +96,12 @@ export const utils = {
         });
 
         if (response.ok) {
-            connectionString = response.json();
+            connectionString = await response.json() as ConnectionStringType;
             return connectionString;
         }
         throw new Error('Invalid connectionString response');
     },
-    registerInboundPhoneNumber: async (phoneNumber, mri) => {
+    registerInboundPhoneNumber: async (phoneNumber: string, mri: string): Promise<void> => {
         let response = await fetch('/configure?'  + new URLSearchParams({
             phoneNumber,
             mri

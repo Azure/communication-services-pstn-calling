@@ -2,11 +2,18 @@ import React from "react";
 import { TextField, PrimaryButton } from '@fluentui/react'
 import { utils } from "../Utils/Utils";
 
+type InboundCallingInputProps = {
+    disabled?: boolean
+    mri: string
+    className?: string
+    style?: React.CSSProperties
+}
 
-const InboundCallingInput = ({ disabled, mri, className, style }) => {
-    const [inputPhoneNumber, setInputPhoneNumber] = React.useState('+31683374648');
-    const [isLoading, setLoading] = React.useState(false);
-    const [registeredPhoneNumbers, setRegisteredPhoneNumbers] = React.useState([]);
+const InboundCallingInput: React.FC<InboundCallingInputProps> = ({ disabled: propsDisabled, mri, className, style }) => {
+    const [inputPhoneNumber, setInputPhoneNumber] = React.useState<string>('');
+    const [isLoading, setLoading] = React.useState<boolean>(false);
+    const [registeredPhoneNumbers, setRegisteredPhoneNumbers] = React.useState<string[]>([]);
+    const disabled = propsDisabled != null && propsDisabled;
 
     const uploadPhoneNumber = async () => {
         if (isLoading) {
@@ -29,7 +36,7 @@ const InboundCallingInput = ({ disabled, mri, className, style }) => {
                     placeholder="+1234567890"
                     defaultValue={inputPhoneNumber}
                     disabled={disabled || isLoading}
-                    onChange={(e) => setInputPhoneNumber(e.target.value)} />
+                    onChange={(event) => setInputPhoneNumber((event.target as HTMLTextAreaElement).value)} />
                 <PrimaryButton
                     className="primary-button w-auto ml-3"
                     disabled={disabled || isLoading || registeredPhoneNumbers.includes(inputPhoneNumber)}

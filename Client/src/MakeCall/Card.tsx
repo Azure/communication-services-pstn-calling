@@ -4,7 +4,14 @@
 import React from 'react';
 import { PrimaryButton } from '@fluentui/react';
 
-const Card = ({title, showCodeIconName, code, children, subTitle, extraButton }) => {
+type CardType = {
+    title: string
+    showCodeIconName: string
+    code: string
+    subTitle?: string
+    extraButton?: React.ReactNode
+}
+const Card: React.FC<CardType> = ({title, showCodeIconName, code, children, subTitle, extraButton }) => {
     const [showCode, setShowCode] = React.useState(false);
     // debugger;
     return (

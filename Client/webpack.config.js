@@ -16,25 +16,25 @@ const isProd =
   (env.production != null &&
     (env.production == true || env.production == "true"));
 
-module.exports = {
-  ...(isProd ? {} : { devtool: "eval-source-map" }),
-  mode: isProd ? "production" : "development",
-  entry: "./src/index.jsx",
+module.exports = (env) => ({
+  devtool: "eval-source-map",
+  entry: "./src/index.tsx",
   output: {
-    path: path.join(__dirname, isProd ? "dist/build" : "dist"),
+    path: path.join(__dirname, "dist/build"),
     filename: "build.js",
   },
   resolve: {
-    extensions: [".js", ".jsx"],
+    extensions: [".js", ".jsx", ".ts", ".tsx"],
   },
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.tsx?$/,
         exclude: [/dist/, /node_modules/],
-        use: {
-          loader: "babel-loader",
-        },
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true,
+        }
       },
       {
         test: /\.html$/,
@@ -70,7 +70,7 @@ module.exports = {
         path: "/configure",
         target: "https://[::1]:44393",
         secure: false
-      }n
+      }
     ],
   },
-};
+});

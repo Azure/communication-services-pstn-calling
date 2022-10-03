@@ -1,37 +1,40 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { TextField } from '@fluentui/react';
 import { PrimaryButton } from '@fluentui/react'
+import { Call } from "@azure/communication-calling";
+
+type AddParticipantPopoverProps = {
+    call: Call
+}
 
 
-export default function AddParticipantPopover(props) {
+const AddParticipantPopover: React.FC<AddParticipantPopoverProps> = ({ call }) => {
     const [userId, setUserId] = useState('');
     const [alternateCallerId, setAlternateCallerId] = useState('');
     const [showAddParticipantPanel, setShowAddParticipantPanel] = useState(false);
 
-    function handleAddCommunicationUser() {
+    const handleAddCommunicationUser = () => {
         console.log('handleAddCommunicationUser', userId);
         try {
-            props.call.addParticipant({ communicationUserId: userId });
-        } catch (e) {
-            console.error(e);
+            call.addParticipant({ communicationUserId: userId });
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    function handleAddPhoneNumber() {
+    const handleAddPhoneNumber = () => {
         console.log('handleAddPhoneNumber', userId);
         try {
-            props.call.addParticipant({ phoneNumber: userId }, { alternateCallerId: { phoneNumber: alternateCallerId }});
-        } catch (e) {
-            console.error(e);
+            call.addParticipant({ phoneNumber: userId }, { alternateCallerId: { phoneNumber: alternateCallerId }});
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    function toggleAddParticipantPanel() {
-        setShowAddParticipantPanel(!showAddParticipantPanel);
-    }
+    const toggleAddParticipantPanel = () => setShowAddParticipantPanel(!showAddParticipantPanel);
 
     return (
         <>
@@ -45,8 +48,8 @@ export default function AddParticipantPopover(props) {
                         <div className="add-participant-panel">
                             <h3 className="add-participant-panel-header">Add a participant</h3>
                             <div className="add-participant-panel-header">
-                                <TextField className="text-left" label="Identifier" onChange={e => setUserId(e.target.value)} />
-                                <TextField className="text-left" label="Alternate Caller Id (For adding phone number only)" onChange={e => setAlternateCallerId(e.target.value)} />
+                                <TextField className="text-left" label="Identifier" onChange={event => setUserId((event.target as HTMLTextAreaElement).value)} />
+                                <TextField className="text-left" label="Alternate Caller Id (For adding phone number only)" onChange={event => setAlternateCallerId((event.target as HTMLTextAreaElement).value)} />
                                 <PrimaryButton className="mt-3" onClick={handleAddCommunicationUser}>Add CommunicationUser</PrimaryButton>
                                 <PrimaryButton className="mt-1" onClick={handleAddPhoneNumber}>Add Phone Number</PrimaryButton>
                             </div>
@@ -58,3 +61,5 @@ export default function AddParticipantPopover(props) {
         </>
     );
 }
+
+export default AddParticipantPopover;
