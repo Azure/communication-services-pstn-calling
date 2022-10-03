@@ -13,7 +13,6 @@ type CardType = {
 }
 const Card: React.FC<CardType> = ({title, showCodeIconName, code, children, subTitle, extraButton }) => {
     const [showCode, setShowCode] = React.useState(false);
-    // debugger;
     return (
         <div className="card">
             <div className="ms-Grid">

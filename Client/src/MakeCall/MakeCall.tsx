@@ -10,7 +10,6 @@ import {
     MessageBar,
     MessageBarType,
 } from '@fluentui/react'
-import { Icon } from '@fluentui/react/lib/Icon';
 import IncomingCallCard from './IncomingCallCard';
 import CallCard from './CallCard'
 import Login from './Login';
@@ -45,7 +44,6 @@ const MakeCall: React.FC = () => {
     const [deviceManagerWarning, setDeviceManagerWarning] = React.useState<string>('');
     const [destinationPhoneIds, setDestinationPhoneIds] = React.useState<string>('');
     const [alternateCallerId, setAlternateCallerId] = React.useState<string>('');
-    const [destinationGroup, setDestinationGroup] = React.useState<string>('29228d3e-040e-4656-a70e-890ab4e173e5');
     const [mri, setMri] = React.useState<string>('');
 
 
@@ -167,16 +165,6 @@ const MakeCall: React.FC = () => {
         document.body.removeChild(element);
         logBuffer = [];
     }
-
-    const joinGroup = async () => {
-        try {
-            const callOptions = await getCallOptions();
-            callAgent.join({ groupId: destinationGroup }, callOptions);
-        } catch (error) {
-            console.error('Failed to join a call', error);
-            setCallError(`Failed to join a call: ${error}`);
-        }
-    };
 
     const getCallOptions = async (): Promise<AcceptCallOptions> => {
         let callOptions: AcceptCallOptions = { audioOptions: { muted: false }};

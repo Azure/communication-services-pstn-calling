@@ -4,6 +4,7 @@ import {
     DialogType,
     DialogFooter
 } from '@fluentui/react';
+import { RestError } from '@azure/core-http';
 import React from 'react';
 import { SipRoutingClient, SipTrunkRoute } from '@azure/communication-phone-numbers';
 import TrunkView, { 
@@ -163,14 +164,20 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
         })
 
         // Delete the reference to this Trunk from any VoiceRoute still referencing it
-        setVoiceRoutes((oldRoutes) => validateVoiceRoutes([
-            ...oldRoutes.filter(route => route.trunks == null || route.trunks.includes(trunk.fqdn)),
-            ...oldRoutes.filter((route) => route.trunks == null || route.trunks.includes(trunk.fqdn))
+        setVoiceRoutes((oldRoutes) => {
+            let newRoutes = [
+            ...oldRoutes.filter(route => route.trunks == null || !route.trunks.includes(trunk.fqdn)),
+            ...oldRoutes.filter((route) => route.trunks != null && route.trunks.includes(trunk.fqdn))
                 .map((route) => ({
                     ...route,
                     trunks: route.trunks == null ? undefined : route.trunks.filter(fqdn => fqdn != trunk.fqdn)
                 }))
-        ]).sort((a, b) => a.key - b.key))
+            ];
+            while (newRoutes.length < 3) {
+                newRoutes = [...newRoutes, {...emptyVoiceRoute, key: getNewKey(newRoutes)}];
+            }
+            return validateVoiceRoutes(newRoutes).sort((a, b) => a.key - b.key);
+        })
     }
     
     /**
@@ -198,16 +205,19 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
             setDialogTitle('Upload Successful');
             setDialogMessage('Azure is connecting to the Trunks. It might take up to six minutes for the changes to take effect.');
         } catch (error) {
-            debugger; // TODO debug what error this is
             console.log(`Error: ${JSON.stringify(error)}`);
-            setDialogTitle('Uploading Failed.')
-            if (error.code == 'REQUEST_SEND_ERROR') {
-                setDialogMessage('Could not connect to Azure. Please check your internet connection.');
-            } else if (error.response?.status == 422) {
-                setDialogMessage(error.response?.parsedBody.error.innerError.message);
-            } else {
-                setDialogMessage('Unknown error occurred.');
+            if (error instanceof RestError) {
+                setDialogTitle('Uploading Failed.')
+                if (error.code == 'REQUEST_SEND_ERROR') {
+                    setDialogMessage('Could not connect to Azure. Please check your internet connection.');
+                    return;
+                }
+                if (error.response?.status == 422) {
+                    setDialogMessage(error.response?.parsedBody.error.innerError.message);
+                    return;
+                }
             }
+            setDialogMessage('Unknown error occurred.');
         }
         setUploading(false);
         setShowUploadedDialog(true);
