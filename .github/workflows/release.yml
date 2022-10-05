@@ -44,6 +44,9 @@ jobs:
           unset CI
           # Copy to folder
           mkdir Client/dist/Server
+          pwd
+          ls
+          ls Client/dist
           cp Server/bin/Release/net6.0/* Client/dist/Server/*
           cp Server/bin/Release/net6.0/web.config Client/dist/
 
