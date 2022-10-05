@@ -201,19 +201,17 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
     }));
 
     try {
-      // TODO enable await sipClient.setRoutes([]);
-      await sipClient.setTrunks(trunks);
-      await sipClient.setRoutes(routes);
+      utils.setDirectRoutingRules(trunks, routes);
       setDialogTitle('Upload Successful');
       setDialogMessage(
-        'Azure is connecting to the Trunks. It might take up to six minutes for the changes to take effect.'
+        'Azure is connecting to the Trunks. It might take up to ten minutes for the changes to take effect.'
       );
     } catch (error) {
       console.log(`Error: ${JSON.stringify(error)}`);
       if (error instanceof RestError) {
         setDialogTitle('Uploading Failed.');
         if (error.code == 'REQUEST_SEND_ERROR') {
-          setDialogMessage('Could not connect to Azure. Please check your internet connection.');
+          setDialogMessage('Could not connect to server. Please check your internet connection.');
           return;
         }
         if (error.response?.status == 422) {
@@ -236,10 +234,7 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
     setDownloading(true);
 
     // Retrieve the connectionString, and the trunks and routes
-    const { connectionString } = await utils.getConnectionString();
-    sipClient = new SipRoutingClient(connectionString);
-    const trunks = await sipClient.getTrunks();
-    const routes = await sipClient.getRoutes();
+    const { trunks, routes } = await utils.getTrunksAndRoutes();
 
     // Create a list of Trunks from the list of trunks
     // Parse the ports to strings, and add a key

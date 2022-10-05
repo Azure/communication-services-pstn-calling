@@ -59,10 +59,6 @@ const CallCard: React.FC<CallCardPropType> = ({
   );
   const [showSettings, setShowSettings] = React.useState<boolean>(false);
   const [callMessage, setCallMessage] = React.useState<string>('');
-  const [isDominantSpeakerMode, setDominantSpeakerMode] = React.useState<boolean>(false);
-  const [dominantRemoteParticipant, setDominantRemoteParticipant] = React.useState<RemoteParticipant | undefined>(
-    undefined
-  );
 
   const subscribeToRemoteParticipant = (participant: RemoteParticipant) => {
     if (!remoteParticipants.includes(participant)) {
@@ -144,33 +140,6 @@ const CallCard: React.FC<CallCardPropType> = ({
     call.startAudio(localAudioStream);
   };
 
-  const toggleDominantSpeakerMode = async () => {
-    try {
-      if (isDominantSpeakerMode) {
-        // Turn off dominant speaker mode
-        setDominantSpeakerMode(false);
-        // Render all remote participants's streams
-      } else {
-        // Turn on dominant speaker mode
-        setDominantSpeakerMode(true);
-        // Dispose of all remote participants's stream renderers
-        const dominantSpeakerIdentifier = call.feature(Features.DominantSpeakers).dominantSpeakers.speakersList[0];
-        if (!dominantSpeakerIdentifier) {
-          // Return, no action needed
-          return;
-        }
-
-        // Set the dominant remote participant obj
-        const dominantRemoteParticipant = utils.getRemoteParticipantObjFromIdentifier(call, dominantSpeakerIdentifier);
-        if (dominantRemoteParticipant != null) {
-          setDominantRemoteParticipant(dominantRemoteParticipant);
-        }
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const speakerDeviceSelectionChanged = async (
     event: React.FormEvent<HTMLDivElement>,
     option?: IDropdownOption
@@ -239,10 +208,6 @@ const CallCard: React.FC<CallCardPropType> = ({
           setSelectedSpeakerDeviceId('');
           setSelectedMicrophoneDeviceId('');
         }
-
-        if (call.state === 'Disconnected') {
-          setDominantRemoteParticipant(undefined);
-        }
       };
       callStateChanged();
       call.on('stateChanged', callStateChanged);
@@ -282,38 +247,6 @@ const CallCard: React.FC<CallCardPropType> = ({
           setRemoteParticipants(remoteParticipants.filter((remoteParticipant) => remoteParticipant !== p));
         });
       });
-
-      const dominantSpeakersChangedHandler = async () => {
-        try {
-          if (isDominantSpeakerMode) {
-            const newDominantSpeakerIdentifier = call.feature(Features.DominantSpeakers).dominantSpeakers
-              .speakersList[0];
-            if (newDominantSpeakerIdentifier) {
-              console.log(
-                `DominantSpeaker changed, new dominant speaker: ${
-                  newDominantSpeakerIdentifier ? utils.getIdentifierText(newDominantSpeakerIdentifier) : `None`
-                }`
-              );
-              // Set the new dominant remote participant
-              const newDominantRemoteParticipant = utils.getRemoteParticipantObjFromIdentifier(
-                call,
-                newDominantSpeakerIdentifier
-              );
-              setDominantRemoteParticipant(newDominantRemoteParticipant);
-            } else {
-              console.warn('New dominant speaker is undefined');
-            }
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      };
-
-      const dominantSpeakerIdentifier = call.feature(Features.DominantSpeakers).dominantSpeakers.speakersList[0];
-      if (dominantSpeakerIdentifier) {
-        setDominantRemoteParticipant(utils.getRemoteParticipantObjFromIdentifier(call, dominantSpeakerIdentifier));
-      }
-      call.feature(Features.DominantSpeakers).on('dominantSpeakersChanged', dominantSpeakersChangedHandler);
     }
   }, []);
 
@@ -357,16 +290,7 @@ const CallCard: React.FC<CallCardPropType> = ({
                 inlineLabel
                 onText="On"
                 offText="Off"
-                onChange={() => {
-                  toggleDominantSpeakerMode();
-                }}
               />
-              {isDominantSpeakerMode && (
-                <div>
-                  Current dominant speaker:{' '}
-                  {dominantRemoteParticipant ? utils.getIdentifierText(dominantRemoteParticipant.identifier) : `None`}
-                </div>
-              )}
               <div className="participants-panel-title custom-row text-center">
                 <AddParticipantPopover call={call} />
               </div>

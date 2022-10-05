@@ -69,6 +69,21 @@ module.exports = (env) => ({
         path: '/configure',
         target: 'https://[::1]:44393',
         secure: false
+      },
+      {
+        path: '/routing',
+        target: 'https://[::1]:44393',
+        secure: false
+      },
+      {
+        path: '/phonenumbers',
+        target: 'https://[::1]:44393',
+        secure: false
+      },
+      {
+        path: '/tokens/provisionUser',
+        target: 'https://[::1]:44393',
+        secure: false
       }
     ]
   }

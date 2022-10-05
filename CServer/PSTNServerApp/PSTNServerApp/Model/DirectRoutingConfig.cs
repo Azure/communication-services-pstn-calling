@@ -1,8 +1,16 @@
-﻿namespace PSTNServerApp.Model
+﻿using Azure.Communication.PhoneNumbers.SipRouting;
+
+namespace PSTNServerApp.Model
 {
     public class DirectRoutingConfig
     {
-        public List<SbcConfig> Trunks { get; set; }
-        public List<VoiceRoute> Routes { get; set; }
+        public DirectRoutingConfig(IReadOnlyList<SipTrunk> trunks, IReadOnlyList<SipTrunkRoute> routes)
+        {
+            Trunks = trunks;
+            Routes = routes;
+        }
+
+        public IReadOnlyList<SipTrunk> Trunks { get; set; }
+        public IReadOnlyList<SipTrunkRoute> Routes { get; set; }
     }
 }

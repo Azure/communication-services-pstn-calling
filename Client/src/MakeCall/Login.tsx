@@ -6,11 +6,11 @@ import { TextField, PrimaryButton } from '@fluentui/react';
 import { utils } from '../Utils/Utils';
 import { v4 as uuid } from 'uuid';
 import { userProvisioningAndSdkInitializationCode } from './CodeSamples';
-import { CommunicationIdentityClient, CommunicationUserToken } from '@azure/communication-identity';
+import { CommunicationUserToken } from '@azure/communication-identity';
 import Card from './Card';
 
 type LoginProps = {
-  onLoggedIn: (client: CommunicationUserToken, displayName: string, mri: string, clientTag: string) => void;
+  onLoggedIn: (client: CommunicationUserToken, displayName: string, clientTag: string) => void;
 };
 
 const Login: React.FC<LoginProps> = ({ onLoggedIn }) => {
@@ -27,11 +27,9 @@ const Login: React.FC<LoginProps> = ({ onLoggedIn }) => {
       setShowSpinner(true);
       setDisableInitializeButton(true);
 
-      const { connectionString } = await utils.getConnectionString();
-      const client = await new CommunicationIdentityClient(connectionString).createUserAndToken(['voip']);
-
+      const client = await utils.provisionNewUser();
       setMri(client.user.communicationUserId);
-      await onLoggedIn(client, displayName, mri, clientTag);
+      await onLoggedIn(client, displayName, clientTag);
       setLoggedIn(true);
     } catch (error) {
       console.log(error);

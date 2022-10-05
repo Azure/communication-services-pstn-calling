@@ -9,26 +9,35 @@ import {
   isUnknownIdentifier,
   CommunicationIdentifierKind,
   MicrosoftTeamsUserKind,
-  UnknownIdentifier,
   CommunicationUserKind,
   PhoneNumberKind,
   UnknownIdentifierKind
 } from '@azure/communication-common';
 import { CommunicationUserToken } from '@azure/communication-identity';
+import { SipTrunk, SipTrunkRoute } from '@azure/communication-phone-numbers';
 
-type ConnectionStringType = {
-  connectionString: string;
-};
 
-let connectionString = {
-  connectionString: ''
-};
+type DotNetCommunicationUserIdentifierAndToken = {
+  accessToken: {
+    expiresOn: string
+    token: string
+  }
+  user: {
+    id: string
+    rawId: string
+  }
+}
+
+type DirectRoutingConfig = {
+  trunks: SipTrunk[]
+  routes: SipTrunkRoute[]
+}
 
 export const utils = {
   getAppServiceUrl: (): string => {
     return window.location.origin;
   },
-  provisionNewUser: async (userId: string): Promise<CommunicationUserToken> => {
+  provisionNewUser: async (userId?: string): Promise<CommunicationUserToken> => {
     let response = await fetch('/tokens/provisionUser', {
       method: 'POST',
       body: JSON.stringify({ userId }),
@@ -38,10 +47,19 @@ export const utils = {
       }
     });
 
-    if (response.ok) {
-      return await response.json();
+    if (!response.ok) {
+      throw new Error('Invalid token response.');
     }
-    throw new Error('Invalid token response');
+
+    // Translate from the .NET CommunicationUserIdentifierAndToken class 
+    // to the typescript CommunicationUserToken interface
+    const client: DotNetCommunicationUserIdentifierAndToken = await response.json();
+    const result: CommunicationUserToken = {
+      user: { communicationUserId: client.user.id },
+      token: client.accessToken.token,
+      expiresOn: new Date(client.accessToken.expiresOn)
+    }
+    return result;
   },
   getIdentifierText: (identifier: CommunicationIdentifierKind): string => {
     if (isCommunicationUserIdentifier(identifier)) {
@@ -84,24 +102,6 @@ export const utils = {
       }
     }
   },
-  getConnectionString: async (): Promise<ConnectionStringType> => {
-    if (connectionString.connectionString.length > 0) {
-      return connectionString;
-    }
-    let response = await fetch('/connectionString', {
-      method: 'GET',
-      headers: {
-        Accept: 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (response.ok) {
-      connectionString = (await response.json()) as ConnectionStringType;
-      return connectionString;
-    }
-    throw new Error('Invalid connectionString response');
-  },
   registerInboundPhoneNumber: async (phoneNumber: string, mri: string): Promise<void> => {
     let response = await fetch(
       '/configure?' +
@@ -122,5 +122,43 @@ export const utils = {
     if (!response.ok) {
       throw new Error('Could not link phone number to this application.');
     }
+  },
+  setDirectRoutingRules: async (trunks: SipTrunk[], routes: SipTrunkRoute[]): Promise<void> => {
+    let response = await fetch('/routing', {
+      method: 'POST',
+      body: JSON.stringify({ trunks, routes }),
+      headers: {
+        Accept: 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'
+      }
+    })
+    if (!response.ok) {
+      throw new Error('Could not set the direct routing configuration.');
+    }
+  },
+  getTrunksAndRoutes: async (): Promise<DirectRoutingConfig> => {
+    let response = await fetch('/routing', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json, text/plain, */*',
+      }
+    })
+    if (!response.ok) {
+      throw new Error('Could not retrieve the direct routing configuration.');
+    }
+
+    return await response.json();
+  },
+  getPhoneNumbers: async(): Promise<string[]> => {
+    let response = await fetch('/phonenumbers', {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json, text/plain, */*'
+      }
+    })
+    if (!response.ok) {
+      throw new Error('Could not retrieve the existing phone numbers.');
+    }
+    return await response.json();
   }
 };

@@ -9,6 +9,8 @@
     {
         public string RawId { get; set; }
 
+        public string Kind { get; set; }
+
         public IDictionary<string, string> CommunicationUser { get; set; }
 
         public IDictionary<string, string> PhoneNumber { get; set; }

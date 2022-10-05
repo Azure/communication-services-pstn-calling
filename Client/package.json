@@ -6,7 +6,7 @@
     "@azure/communication-calling": "^1.7.0-beta.1",
     "@azure/communication-common": "^2.1.0",
     "@azure/communication-identity": "^1.1.0",
-    "@azure/communication-phone-numbers": "^1.2.0-alpha.20220912.1",
+    "@azure/communication-phone-numbers": "^1.2.0-alpha.20220923.1",
     "@azure/core-http": "^2.2.7",
     "@fluentui/react": "^8.86.3",
     "@uifabric/fluent-theme": "^7.7.7",

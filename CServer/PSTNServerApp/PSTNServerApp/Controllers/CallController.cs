@@ -11,6 +11,9 @@ namespace PSTNServerApp.Controllers
     using Azure.Communication.Identity;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
+    using System.Collections.Concurrent;
+    using System.Net;
 
     /// <summary>
     /// Controller that handles all call related API endpoints.
@@ -24,8 +27,7 @@ namespace PSTNServerApp.Controllers
 
         private readonly CallAutomationClient callClient;
         private readonly CommunicationIdentityClient identityClient;
-        private readonly AppOptions appOptions;
-        private readonly Dictionary<string, string> phoneNumberToMriMap = new Dictionary<string, string>();
+        static readonly ConcurrentDictionary<string, string> phoneNumberToMriMap = new ConcurrentDictionary<string, string>();
         private readonly ILogger<CallController> logger;
 
         /// <summary>
@@ -35,36 +37,10 @@ namespace PSTNServerApp.Controllers
         /// <param name="logger">Logger to keep track of events.</param>
         public CallController(AppOptions appOptions, ILogger<CallController> logger)
         {
-            this.appOptions = appOptions;
             this.logger = logger;
             this.callClient = new CallAutomationClient(appOptions.ConnectionString);
             this.identityClient = new CommunicationIdentityClient(appOptions.ConnectionString);
         }
-
-        /// <summary>
-        /// Supply the front-end with the connectionString.
-        /// Is necessary for Direct Routing functionality in the front-end.
-        /// TODO remove this and provide functionality in the server app.
-        /// </summary>
-        /// <returns>The connection string.</returns>
-        [HttpGet("/connectionString")]
-        public IActionResult OnConnectionStringRequest()
-        {
-            this.logger.LogInformation("Request for connection string");
-            return this.Content(
-                $"{{\"connectionString\": \"{appOptions.ConnectionString}\"}}",
-                System.Net.Mime.MediaTypeNames.Application.Json,
-                System.Text.Encoding.UTF8);
-        }
-
-        // [HttpPost("/provisionUser")]
-        //public IActionResult OnProvisionUserRequest([FromBody] UserInfo userInfo = default)
-        //{
-        //var list = new List<CommunicationTokenScope>();
-        //list.Add(CommunicationTokenScope.VoIP);
-        //var user = identityClient.CreateUserAndToken(list);
-        //    return JsonSerializer.Serialize(user.Value);
-        //}
 
         /// <summary>
         /// Respond to an incoming call.
@@ -76,34 +52,35 @@ namespace PSTNServerApp.Controllers
         /// <returns>Http Response</returns>
         [HttpPost("/incomingCall")]
         [AllowAnonymous]
-        public IActionResult OnIncomingCallRequestAsync([FromBody] object request)
+        public async Task<IActionResult> OnIncomingCallRequestAsync([FromBody] object request)
         {
-            this.logger.LogInformation("Request on /incomingCall");
+            logger.LogInformation("Request on /incomingCall");
             
             // parse the request
             var httpContent = new BinaryData(request.ToString()).ToStream();
             var cloudEvent = EventGridEvent.ParseMany(BinaryData.FromStream(httpContent)).FirstOrDefault();
 
+            // Check how the server app should respond
             if (cloudEvent == null)
             {
-                this.logger.LogWarning("Could not extract cloud event from request.");
+                logger.LogWarning("Could not extract cloud event from request.");
             } 
             else if (cloudEvent.EventType == SystemEventNames.EventGridSubscriptionValidation)
             {
-                this.logger.LogInformation("Providing Subscription Validation");
+                logger.LogInformation("Providing Subscription Validation");
                 return HandleSubscriptionValidation(cloudEvent);
             }
             else if (cloudEvent.EventType.Equals("Microsoft.Communication.IncomingCall"))
             {
-                this.logger.LogInformation("Responding to Incoming Call");
-                return HandleCallEvent(cloudEvent);
+                logger.LogInformation($"Responding to Incoming Call");
+                return await HandleCallEvent(cloudEvent);
             } 
             else
             {
-                this.logger.LogInformation("Unknown request for /incomingCall");
+                logger.LogInformation("Unknown request for /incomingCall");
             }
 
-            return Ok();
+            return StatusCode((int)HttpStatusCode.OK);
         }
 
         /// <summary>
@@ -118,8 +95,37 @@ namespace PSTNServerApp.Controllers
         [AllowAnonymous]
         public IActionResult OnConfigureRequest(string phoneNumber, string mri)
         {
-            phoneNumberToMriMap.Add(phoneNumber, mri);
+            if (phoneNumber == null || mri == null)
+            {
+                logger.LogInformation($"Bad request, no phone number ({phoneNumber}) of no mri ({mri})");
+                return BadRequest();
+            }
+            logger.LogInformation($"Request to configure phone number {phoneNumber} for mri {mri}");
+            phoneNumberToMriMap.AddOrUpdate(phoneNumber, mri, (a, b) => mri);
             return Ok();
+        }
+
+        [HttpPost("/tokens/provisionUser")]
+        [AllowAnonymous]
+        public async Task<IActionResult> OnProvisionUserRequest()
+        {
+            logger.LogInformation("Request to provision a user at /tokens/provisionUser");
+            var list = new List<CommunicationTokenScope>();
+            list.Add(CommunicationTokenScope.VoIP);
+            var userAndToken = await identityClient.CreateUserAndTokenAsync(list);
+            
+            var json = JsonConvert.SerializeObject(
+                userAndToken.Value,
+                new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                }
+            );
+            return Content(
+                json,
+                System.Net.Mime.MediaTypeNames.Application.Json,
+                System.Text.Encoding.UTF8
+            );
         }
 
         /// <summary>
@@ -152,20 +158,36 @@ namespace PSTNServerApp.Controllers
         /// </summary>
         /// <param name="cloudEvent">Event generated by EventGrid</param>
         /// <returns>Http Response. Always 200/OK</returns>
-        public IActionResult HandleCallEvent(EventGridEvent cloudEvent)
+        public async Task<IActionResult> HandleCallEvent(EventGridEvent cloudEvent)
         {
-            // This is for incoming call
+            
             var callEvent = JsonConvert.DeserializeObject<IncomingCallEvent>(cloudEvent.Data.ToString());
-            if (callEvent != null && callEvent.From != null && callEvent.From.PhoneNumber != null && callEvent.From.PhoneNumber.ContainsKey("value"))
+            if (callEvent != null && !callEvent.To.Kind.Equals("communicationUser") && callEvent.From.PhoneNumberValue.Length > 0)
             {
-                var phoneNumber = callEvent.From.PhoneNumber["value"];
+                var phoneNumber = callEvent.From.PhoneNumberValue;
                 if (phoneNumberToMriMap.ContainsKey(phoneNumber))
                 {
                     var mri = new CommunicationUserIdentifier(phoneNumberToMriMap[phoneNumber]);
-                    callClient.RedirectCallAsync(callEvent.IncomingCallContext, mri);
+                    if (!callEvent.To.RawId.Equals(mri))
+                    {
+                        logger.LogInformation($"Routing call from {phoneNumber} to {mri} with correlation id {callEvent.CorrelationId}");
+                        await callClient.RedirectCallAsync(callEvent.IncomingCallContext, mri);
+                    } else
+                    {
+                        logger.LogInformation("Received incoming call event for client app. Not forwarding.");
+                    }
+                } 
+                else
+                {
+                    logger.LogInformation($"No MRI found for call from {phoneNumber}");
                 }
+                logger.LogInformation($"Finished routing call with /incomingCall {callEvent.CorrelationId}");
             }
-            return Ok();
+            else
+            {
+                logger.LogInformation("Incoming call event found for communication user.");
+            }
+            return StatusCode((int)HttpStatusCode.OK);
         }
     }
 }

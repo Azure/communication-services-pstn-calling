@@ -14,9 +14,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Model\UserInfo.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Azure.Communication.CallingServer" Version="1.0.0-alpha.20220928.1" />
     <PackageReference Include="Azure.Communication.Identity" Version="1.1.0" />
-    <PackageReference Include="Azure.Communication.PhoneNumbers" Version="1.1.0-beta.2" />
+    <PackageReference Include="Azure.Communication.PhoneNumbers" Version="1.1.0-alpha.20221003.1" />
     <PackageReference Include="Azure.Messaging.EventGrid" Version="4.11.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />

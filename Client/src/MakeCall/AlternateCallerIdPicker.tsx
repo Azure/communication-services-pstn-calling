@@ -1,9 +1,6 @@
-import { PhoneNumbersClient } from '@azure/communication-phone-numbers';
 import { ITag, TagPicker } from '@fluentui/react';
 import React from 'react';
 import { utils } from '../Utils/Utils';
-
-let phoneNumbersClient: PhoneNumbersClient | null = null; // Client that handles the retrieval of the phone numbers
 
 type AlternateCallerIdPickerProps = {
   label: string;
@@ -39,17 +36,8 @@ const AlternateCallerIdPicker: React.FC<AlternateCallerIdPickerProps> = ({ disab
   /**
    * Load the bought direct offer phone numbers from Azure.
    */
-  const loadPhoneNumbers = async () => {
-    const { connectionString } = await utils.getConnectionString();
-    phoneNumbersClient = new PhoneNumbersClient(connectionString);
-
-    const phoneNumbersPromises = phoneNumbersClient.listPurchasedPhoneNumbers();
-    let foundPhoneNumbers: string[] = [];
-    for await (const phoneNumber of phoneNumbersPromises) {
-      foundPhoneNumbers = [...foundPhoneNumbers, phoneNumber.phoneNumber];
-    }
-    setPhoneNumbers(foundPhoneNumbers.map((number) => ({ key: number, name: number })));
-  };
+  const loadPhoneNumbers = async () =>
+    setPhoneNumbers((await utils.getPhoneNumbers()).map((number) => ({ key: number, name: number })));
 
   // When the page is loaded, load the phone numbers.
   React.useEffect(() => {

@@ -57,16 +57,11 @@ const MakeCall: React.FC = () => {
   const [alternateCallerId, setAlternateCallerId] = React.useState<string>('');
   const [mri, setMri] = React.useState<string>('');
 
-  const handleLogIn = async (
-    client: CommunicationUserToken,
-    displayName: string,
-    mri: string,
-    clientTag: string
-  ): Promise<void> => {
+  const handleLogIn = async (client: CommunicationUserToken, displayName: string, clientTag: string): Promise<void> => {
     try {
       setLogLevel('verbose');
       const tokenCredential = new AzureCommunicationTokenCredential(client.token);
-      setMri(mri);
+      setMri(client.user.communicationUserId);
 
       callClient = new CallClient({
         diagnostics: {
@@ -78,21 +73,6 @@ const MakeCall: React.FC = () => {
       callAgent = await callClient.createCallAgent(tokenCredential, { displayName });
       setEnvironmentInfo(await callClient.getEnvironmentInfo());
 
-      // override logger to be able to dowload logs locally
-      AzureLogger.log = (...args) => {
-        logBuffer.push(...args);
-        if (args[0].startsWith('azure:ACS:info')) {
-          console.info(...args);
-        } else if (args[0].startsWith('azure:ACS:verbose')) {
-          console.debug(...args);
-        } else if (args[0].startsWith('azure:ACS:warning')) {
-          console.warn(...args);
-        } else if (args[0].startsWith('azure:ACS:error')) {
-          console.error(...args);
-        } else {
-          console.log(...args);
-        }
-      };
       deviceManager = await callClient.getDeviceManager();
       setPermissions(await deviceManager.askDevicePermission({ audio: true, video: false }));
 
@@ -115,9 +95,7 @@ const MakeCall: React.FC = () => {
         });
 
         event.removed.forEach((_call) => {
-          if (call != null && call === _call) {
-            displayCallEndReason(call.callEndReason);
-          }
+          displayCallEndReason(_call.callEndReason);
         });
       });
       callAgent.on('incomingCall', ({ incomingCall }) => {
@@ -184,12 +162,11 @@ const MakeCall: React.FC = () => {
   const getCallOptions = async (): Promise<AcceptCallOptions> => {
     let callOptions: AcceptCallOptions = { audioOptions: { muted: false } };
 
-    let cameraWarning: string | undefined = undefined;
     let speakerWarning: string | undefined = undefined;
     let microphoneWarning: string | undefined = undefined;
 
     // On iOS, device permissions are lost after a little while, so re-ask for permissions
-    const permissions = await deviceManager.askDevicePermission({ audio: true, video: true });
+    const permissions = await deviceManager.askDevicePermission({ audio: true, video: false });
     setPermissions(permissions);
 
     try {
@@ -203,32 +180,26 @@ const MakeCall: React.FC = () => {
         await deviceManager.selectSpeaker(speakerDevice);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        speakerWarning = error.message;
-      }
+      speakerWarning = (error as Error).message;
     }
 
     try {
       const microphones = await deviceManager.getMicrophones();
-      const microphoneDevice = microphones[0];
-      if (!microphoneDevice || microphoneDevice.id === 'microphone:') {
+      if (microphones.length == 0 || microphones[0].id === 'microphone:') {
         throw new Error('No microphone devices found.');
       }
-      setSelectedMicrophoneDeviceId(microphoneDevice.id);
+      setSelectedMicrophoneDeviceId(microphones[0].id);
       setMicrophoneDeviceOptions(microphones);
-      await deviceManager.selectMicrophone(microphoneDevice);
+      await deviceManager.selectMicrophone(microphones[0]);
     } catch (error) {
       if (error instanceof Error) {
         microphoneWarning = error.message;
       }
     }
 
-    if (cameraWarning || speakerWarning || microphoneWarning) {
-      setDeviceManagerWarning(
-        `${cameraWarning ? cameraWarning + ' ' : ''}
-                    ${speakerWarning ? speakerWarning + ' ' : ''}
-                    ${microphoneWarning ? microphoneWarning + ' ' : ''}`
-      );
+    if (speakerWarning || microphoneWarning) {
+      setDeviceManagerWarning(`${speakerWarning ? speakerWarning + ' ' : ''}
+                    ${microphoneWarning ? microphoneWarning + ' ' : ''}`);
     }
 
     return callOptions;
@@ -248,6 +219,7 @@ const MakeCall: React.FC = () => {
     return clearInterval(identifier);
   }, []);
 
+  console.warn(`Call null: ${call == null}, incomingcall null: ${incomingCall == null}`);
   return (
     <div>
       <Login onLoggedIn={handleLogIn} />
@@ -275,7 +247,7 @@ const MakeCall: React.FC = () => {
             onClick={downloadLog}
           ></PrimaryButton>
         }
-        subTitle={`Permissions audio: ${permissions?.audio} video: ${permissions?.video}`}
+        subTitle={`Permissions audio: ${permissions?.audio}`}
       >
         <div className="mb-2">
           Having provisioned an ACS Identity and initialized the SDK from the section above, you are now ready to place
@@ -315,7 +287,7 @@ const MakeCall: React.FC = () => {
             </ul>
           </MessageBar>
         )}
-        {!incomingCall && !call && (
+        {incomingCall == null && call == null && (
           <div className="ms-Grid-row mt-3">
             <div className="call-input-panel mb-5 ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl4">
               <h3 className="mb-1">Place a call</h3>
@@ -345,14 +317,7 @@ const MakeCall: React.FC = () => {
                 text="Place call"
                 disabled={call || !loggedIn}
                 onClick={placeCall}
-              ></PrimaryButton>
-              <PrimaryButton
-                className="primary-button"
-                iconProps={{ iconName: 'Video', style: { verticalAlign: 'middle', fontSize: 'large' } }}
-                text="Place call with video"
-                disabled={call || !loggedIn}
-                onClick={placeCall}
-              ></PrimaryButton>
+              />
             </div>
             <div className="call-input-panel mb-5 ms-Grid-col ms-sm12 ms-lg12 ms-xl12 ms-xxl4">
               <InboundCallingInput mri={mri} disabled={call || !loggedIn} />
@@ -385,3 +350,19 @@ const MakeCall: React.FC = () => {
 };
 
 export default MakeCall;
+
+// override logger to be able to dowload logs locally
+AzureLogger.log = (...args) => {
+  logBuffer.push(...args);
+  if (args[0].startsWith('azure:ACS:info')) {
+    console.info(...args);
+  } else if (args[0].startsWith('azure:ACS:verbose')) {
+    console.debug(...args);
+  } else if (args[0].startsWith('azure:ACS:warning')) {
+    console.warn(...args);
+  } else if (args[0].startsWith('azure:ACS:error')) {
+    console.error(...args);
+  } else {
+    console.log(...args);
+  }
+};

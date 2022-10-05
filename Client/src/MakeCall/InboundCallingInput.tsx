@@ -39,7 +39,7 @@ const InboundCallingInput: React.FC<InboundCallingInputProps> = ({
         <TextField
           className="f-1"
           placeholder="+1234567890"
-          defaultValue={inputPhoneNumber}
+          value={inputPhoneNumber}
           disabled={disabled || isLoading}
           onChange={(event) => setInputPhoneNumber((event.target as HTMLTextAreaElement).value)}
         />
