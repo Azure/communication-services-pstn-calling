@@ -43,7 +43,7 @@ jobs:
           release_name=Calling-Tutorial
           unset CI
           # Copy to folder
-          mkir Client/dist/Server
+          mkdir Client/dist/Server
           cp Server/bin/Release/net6.0/* dist/Server/*
           cp Server/bin/Release/net6.0/web.config dist/
 
