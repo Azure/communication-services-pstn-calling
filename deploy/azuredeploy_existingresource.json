@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.9.1.41621",
-      "templateHash": "10923175356089192467"
+      "version": "0.11.1.770",
+      "templateHash": "2214456593873603458"
     }
   },
   "parameters": {
@@ -25,7 +25,7 @@
   },
   "variables": {
     "appServicePlanPortalName": "[format('AppServicePlan-{0}', parameters('appName'))]",
-    "packageUrl": "https://github.com/Azure-Samples/communication-services-web-calling-tutorial/releases/latest/download/calling-tutorial-build.zip",
+    "packageUrl": "https://github.com/Azure-Samples/communication-services-pstn-calling/releases/latest/download/calling-tutorial-build.zip",
     "communicationServicesResourceId": "<Enter you Communication Service Resource ID here",
     "location": "[resourceGroup().location]"
   },
@@ -35,8 +35,7 @@
       "apiVersion": "2022-03-01",
       "name": "[format('{0}/{1}', parameters('appName'), 'appsettings')]",
       "properties": {
-        "ResourceConnectionString": "[listkeys(variables('communicationServicesResourceId'), '2020-08-20').primaryConnectionString]",
-        "WEBSITE_NODE_DEFAULT_VERSION": "~14"
+        "ConnectionString": "[listkeys(variables('communicationServicesResourceId'), '2020-08-20').primaryConnectionString]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', parameters('appName'))]"
