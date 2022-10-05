@@ -9,7 +9,6 @@ type TrunkError = {
 
 type Trunk = {
   key: number;
-  sipSignalingPort: number;
   errors?: TrunkError;
 } & SipTrunk;
 

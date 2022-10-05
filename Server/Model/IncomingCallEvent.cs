@@ -5,17 +5,17 @@
     [Serializable]
     public class IncomingCallEvent
     {
-        public CallParticipant From { get; set; }
+        public CallParticipant From { get; set; } = new CallParticipant();
 
-        public CallParticipant To { get; set; }
+        public CallParticipant To { get; set; } = new CallParticipant();
 
-        public string HasIncomingVideo { get; set; }
+        public string HasIncomingVideo { get; set; } = String.Empty;
 
-        public string CallerDisplayName { get; set; }
+        public string CallerDisplayName { get; set; } = String.Empty;
 
-        public string CorrelationId { get; set; }
+        public string CorrelationId { get; set; } = String.Empty;
 
-        public string IncomingCallContext { get; set; }
+        public string IncomingCallContext { get; set; } = String.Empty;
 
         public override string ToString()
         {

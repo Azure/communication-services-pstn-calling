@@ -247,7 +247,7 @@ const TrunkDropdown: React.FC<TrunkDropdownProps> = ({ voiceRoute, trunks, onCha
   return (
     <Dropdown
       multiSelect
-      options={selectedTrunks.map((trunk) => ({ text: trunk.fqdn, key: trunk.key }))}
+      options={trunks.map((trunk) => ({ text: trunk.fqdn, key: trunk.key }))}
       selectedKeys={selectedTrunks.map(({ key }) => key)}
       onChange={onChange}
       errorMessage={voiceRoute.errors?.trunks}

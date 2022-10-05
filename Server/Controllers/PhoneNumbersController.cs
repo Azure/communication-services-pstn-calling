@@ -4,6 +4,7 @@ using Azure.Communication.PhoneNumbers;
 using Azure.Communication.PhoneNumbers.SipRouting;
 using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json;
+using Microsoft.Extensions.Options;
 
 namespace PSTNServerApp.Controllers
 {
@@ -14,10 +15,10 @@ namespace PSTNServerApp.Controllers
         private readonly SipRoutingClient sipRoutingClient;
         private readonly PhoneNumbersClient phoneNumbersClient;
 
-        public PhoneNumbersController(AppOptions appOptions, ILogger<PhoneNumbersController> logger)
+        public PhoneNumbersController(IOptions<AppOptions> appOptions, ILogger<PhoneNumbersController> logger)
         {
-            sipRoutingClient = new SipRoutingClient(appOptions.ConnectionString);
-            phoneNumbersClient = new PhoneNumbersClient(appOptions.ConnectionString);
+            sipRoutingClient = new SipRoutingClient(appOptions.Value.GetConnectionString());
+            phoneNumbersClient = new PhoneNumbersClient(appOptions.Value.GetConnectionString());
             this.logger = logger;
         }
 

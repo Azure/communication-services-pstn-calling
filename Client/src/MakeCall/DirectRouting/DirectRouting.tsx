@@ -19,9 +19,6 @@ import { utils } from '../../Utils/Utils';
 const getNewKey = (list: VoiceRoute[] | Trunk[]) =>
   list.length == 0 ? 0 : list.map((element) => element.key).reduce((a, b) => Math.max(a, b.key), 0) + 1;
 
-// Sip client that is initialized after the connectionString has been retrieved
-let sipClient: SipRoutingClient | null = null;
-
 type DirectRoutingPropsType = {
   disabled?: boolean;
   className?: string;
@@ -182,9 +179,6 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
    * Upload the data when the user clicks on *Create*.
    */
   const onCreateClick = async () => {
-    if (sipClient == null) {
-      return;
-    }
     setUploading(true);
 
     // Find the new trunks and routes that have been created
@@ -248,7 +242,7 @@ const DirectRouting: React.FC<DirectRoutingPropsType> = ({ disabled: propsDisabl
     // Add a key to the voiceroutes (same as with Trunks) and
     // And change the fqdn list in the trunks field to this the key of the right trunk
     // This way the voice route points to the correct Trunk
-    let newVoiceRoutes = routes.map(({ trunks, ...route }, key) => ({ ...route, key }));
+    let newVoiceRoutes = routes.map((route, key) => ({ ...route, key }));
     while (newVoiceRoutes.length < 3) {
       newVoiceRoutes = [...newVoiceRoutes, { ...emptyVoiceRoute, key: newVoiceRoutes.length }];
     }

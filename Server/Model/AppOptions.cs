@@ -7,37 +7,20 @@ namespace PSTNServerApp.Model
     {
         public const string Name = "PSTNServerApp";
 
-        private string connectionString = String.Empty;
-        public string ConnectionString
+        public string ConnectionString { get; set; } = String.Empty;
+        public string GetConnectionString()
         {
-            get
+            if (ConnectionString != null && IsValidConnectionString(ConnectionString))
             {
-                if (this.connectionString != null && IsValidConnectionString(this.connectionString))
-                {
-                    return this.connectionString;
-                }
-                var connectionString = System.Environment.GetEnvironmentVariable("ConnectionString");
-                if (connectionString != null && IsValidConnectionString(connectionString))
-                {
-                    this.connectionString = connectionString;
-                    return connectionString;
-                }
-                throw new ArgumentException("ConnectionString not found. Set the ConnectionString in the appsettings.json or as an environment variable.");
+                return ConnectionString;
             }
-
-            // <summary>
-            /// Load the connection string from either the App Options or the environment variables.
-            /// If there is no ConnectionString in the AppOptions, this function will try to read
-            /// 'ConnectionString' from the environment variables.
-            /// Throws error when neither is available.
-            /// </summary>
-            /// <param name="appOptions">The options with which this application was started.</param>
-            /// <returns>Connection String</returns>
-            /// <exception cref="ArgumentException">In the case no connection string could be found.</exception>
-            set
+            var connectionString = Environment.GetEnvironmentVariable("ConnectionString");
+            if (connectionString != null && IsValidConnectionString(connectionString))
             {
-                this.connectionString = value;
+                ConnectionString = connectionString;
+                return connectionString;
             }
+            throw new ArgumentException("ConnectionString not found. Set the ConnectionString in the appsettings.json or as an environment variable.");
         }
 
         /// <summary>
@@ -46,7 +29,7 @@ namespace PSTNServerApp.Model
         /// </summary>
         /// <param name="connectionString">The connection string to check.</param>
         /// <returns>Boolean indicating validity of the connection string.</returns>
-        public Boolean IsValidConnectionString(string? connectionString)
+        public static bool IsValidConnectionString(string? connectionString)
         {
             if (connectionString == null)
             {

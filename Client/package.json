@@ -16,11 +16,9 @@
     "uuid": "^8.3.2"
   },
   "scripts": {
-    "build": "npm run clean && concurrently --kill-others-on-fail \"webpack --mode=production --env production\"",
+    "build": "npm run clean && webpack --mode=production --env production",
     "clean": "rimraf dist",
-    "package": "copyfiles -E -u 3 \"../Server/dist/**/*\" dist",
-    "start": "concurrently \"cd ../Server && npm run start:dev\" \"npm run start:app\"",
-    "start:app": "webpack-cli serve --port 5000 --mode development",
+    "start": "webpack-cli serve --port 5000 --mode development",
     "prettier": "prettier --no-error-on-unmatched-pattern --write --config ./.prettierrc --ignore-path=../.prettierignore \"**/*.js\" \"**/*.jsx\" \"**/*.ts\" \"**/*.tsx\"",
     "prettier:check": "prettier --no-error-on-unmatched-pattern --check --config ./.prettierrc --ignore-path=./.prettierignore \"**/*.js\" \"**/*.jsx\" \"**/*.ts\" \"**/*.tsx\"",
     "lint": "eslint */**/*.{ts,tsx}",

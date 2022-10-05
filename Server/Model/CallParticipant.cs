@@ -7,13 +7,13 @@
 
     public class CallParticipant
     {
-        public string RawId { get; set; }
+        public string RawId { get; set; } = String.Empty;
 
-        public string Kind { get; set; }
+        public string Kind { get; set; } = String.Empty;
 
-        public IDictionary<string, string> CommunicationUser { get; set; }
+        public IDictionary<string, string> CommunicationUser { get; set; } = new Dictionary<string, string>();
 
-        public IDictionary<string, string> PhoneNumber { get; set; }
+        public IDictionary<string, string> PhoneNumber { get; set; } = new Dictionary<string, string>();
 
         public string PhoneNumberValue => PhoneNumber != null && PhoneNumber.ContainsKey("value") ? PhoneNumber["value"] : string.Empty;
 

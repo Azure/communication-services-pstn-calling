@@ -10,6 +10,7 @@ namespace PSTNServerApp.Controllers
     using Azure.Communication.CallingServer;
     using Azure.Communication.Identity;
     using Microsoft.Extensions.Logging;
+    using Microsoft.Extensions.Options;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Serialization;
     using System.Collections.Concurrent;
@@ -35,11 +36,11 @@ namespace PSTNServerApp.Controllers
         /// </summary>
         /// <param name="appOptions">The options for this app as supplied in appsettings.json</param> The options for this app as supplied in appsettings.json
         /// <param name="logger">Logger to keep track of events.</param>
-        public CallController(AppOptions appOptions, ILogger<CallController> logger)
+        public CallController(IOptions<AppOptions> appOptions, ILogger<CallController> logger)
         {
             this.logger = logger;
-            this.callClient = new CallAutomationClient(appOptions.ConnectionString);
-            this.identityClient = new CommunicationIdentityClient(appOptions.ConnectionString);
+            this.callClient = new CallAutomationClient(appOptions.Value.GetConnectionString());
+            this.identityClient = new CommunicationIdentityClient(appOptions.Value.GetConnectionString());
         }
 
         /// <summary>
@@ -55,9 +56,16 @@ namespace PSTNServerApp.Controllers
         public async Task<IActionResult> OnIncomingCallRequestAsync([FromBody] object request)
         {
             logger.LogInformation("Request on /incomingCall");
-            
+
             // parse the request
-            var httpContent = new BinaryData(request.ToString()).ToStream();
+            var data = request.ToString();
+            if (data == null)
+            {
+                logger.LogWarning("Data from /incomingCall was null");
+                return BadRequest();
+            }
+
+            var httpContent = new BinaryData(data).ToStream();
             var cloudEvent = EventGridEvent.ParseMany(BinaryData.FromStream(httpContent)).FirstOrDefault();
 
             // Check how the server app should respond

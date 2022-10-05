@@ -19,7 +19,7 @@ module.exports = (env) => ({
   devtool: 'eval-source-map',
   entry: './src/index.tsx',
   output: {
-    path: path.join(__dirname, 'dist/build'),
+    path: path.join(__dirname, 'dist/public'),
     filename: 'build.js'
   },
   resolve: {
@@ -62,27 +62,27 @@ module.exports = (env) => ({
     proxy: [
       {
         path: '/connectionString',
-        target: 'https://[::1]:44393',
+        target: 'https://[::1]:8080',
         secure: false
       },
       {
         path: '/configure',
-        target: 'https://[::1]:44393',
+        target: 'https://[::1]:8080',
         secure: false
       },
       {
         path: '/routing',
-        target: 'https://[::1]:44393',
+        target: 'https://[::1]:8080',
         secure: false
       },
       {
         path: '/phonenumbers',
-        target: 'https://[::1]:44393',
+        target: 'https://[::1]:8080',
         secure: false
       },
       {
         path: '/tokens/provisionUser',
-        target: 'https://[::1]:44393',
+        target: 'https://[::1]:8080',
         secure: false
       }
     ]

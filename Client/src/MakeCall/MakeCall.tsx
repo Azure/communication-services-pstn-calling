@@ -219,7 +219,6 @@ const MakeCall: React.FC = () => {
     return clearInterval(identifier);
   }, []);
 
-  console.warn(`Call null: ${call == null}, incomingcall null: ${incomingCall == null}`);
   return (
     <div>
       <Login onLoggedIn={handleLogIn} />
