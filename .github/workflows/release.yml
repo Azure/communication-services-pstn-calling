@@ -50,7 +50,9 @@ jobs:
           cp Server/bin/Release/net6.0/* Client/dist/Server
           cp Server/bin/Release/net6.0/web.config Client/dist/
 
-          7z a -tzip -r "calling-tutorial-build.zip" Client/dist/*
+          cd Client/dist
+          7z a -tzip -r "../../calling-tutorial-build.zip" *
+          cd ../..
 
           # Delete output directory
           rm -r "Client/dist"
