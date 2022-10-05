@@ -26,7 +26,7 @@ jobs:
           dotnet-version: 6.0
 
       - name: Install Server dependencies
-        run: cd Server && dotnet restore
+        run: cd Server && dotnet restore -s https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json
 
       - name: Build Server
         run: cd Server && dotnet build --configuration Release --no-restore
