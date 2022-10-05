@@ -46,11 +46,15 @@ jobs:
           mkdir Client/dist/Server
           pwd
           ls
+          echo "ls Client/dist"
           ls Client/dist
           cp Server/bin/Release/net6.0/* Client/dist/Server
           cp Server/bin/Release/net6.0/web.config Client/dist/
 
           cd Client/dist
+          echo "ls Client/dist after copying"
+          pwd
+          ls
           7z a -tzip -r "../../calling-tutorial-build.zip" *
           cd ../..
 
