@@ -39,10 +39,6 @@ const Login: React.FC<LoginProps> = ({ onLoggedIn }) => {
     }
   };
 
-  React.useEffect(() => {
-    provisionNewUser();
-  }, []);
-
   return (
     <Card
       title="ACS User identity Provisioning and Calling SDK Initialization"

@@ -4,11 +4,10 @@ param appName string
 @description('The SKU of App Service Plan.')
 param sku string = 'F1'
 
-param communicationServicesResourceId string = ''
-
 var appServicePlanPortalName = 'AppServicePlan-${appName}'
 var packageUrl = 'https://github.com/Azure/communication-services-pstn-calling/releases/latest/download/calling-tutorial-build.zip'
 var location = resourceGroup().location
+var communicationServicesResourceId = ''
 var splitAcsId = split(communicationServicesResourceId, '/')
 
 resource serverFarm 'Microsoft.Web/serverfarms@2022-03-01' = {
