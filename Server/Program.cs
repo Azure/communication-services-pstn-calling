@@ -33,13 +33,6 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(builder.Environment.ContentRootPath, "public")),
-    RequestPath = "/"
-});
-
 app.MapControllers();
 
 app.Run();

@@ -62,27 +62,27 @@ module.exports = (env) => ({
     proxy: [
       {
         path: '/connectionString',
-        target: 'https://[::1]:8080',
+        target: 'https://[::1]:44393',
         secure: false
       },
       {
         path: '/configure',
-        target: 'https://[::1]:8080',
+        target: 'https://[::1]:44393',
         secure: false
       },
       {
         path: '/routing',
-        target: 'https://[::1]:8080',
+        target: 'https://[::1]:44393',
         secure: false
       },
       {
         path: '/phonenumbers',
-        target: 'https://[::1]:8080',
+        target: 'https://[::1]:44393',
         secure: false
       },
       {
         path: '/tokens/provisionUser',
-        target: 'https://[::1]:8080',
+        target: 'https://[::1]:44393',
         secure: false
       }
     ]
