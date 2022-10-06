@@ -7,8 +7,9 @@ param sku string = 'F1'
 param communicationServicesResourceId string = ''
 
 var appServicePlanPortalName = 'AppServicePlan-${appName}'
-var packageUrl = 'https://github.com/Azure-Samples/communication-services-pstn-calling/releases/latest/download/calling-tutorial-build.zip'
+var packageUrl = 'https://github.com/Azure/communication-services-pstn-calling/releases/latest/download/calling-tutorial-build.zip'
 var location = resourceGroup().location
+var splitAcsId = split(communicationServicesResourceId, '/')
 
 resource serverFarm 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appServicePlanPortalName
@@ -19,20 +20,22 @@ resource serverFarm 'Microsoft.Web/serverfarms@2022-03-01' = {
   properties: {}
 }
 
+resource ACS 'Microsoft.Communication/communicationServices@2022-07-01-preview' existing = {
+  scope: resourceGroup(splitAcsId[2], splitAcsId[4])
+  name: splitAcsId[8]
+}
+
 resource site 'Microsoft.Web/sites@2022-03-01' = {
   name: appName
   location: location
-  dependsOn: [
-    serverFarm
-  ]
   properties: {
-    serverFarmId: resourceId('Microsoft.Web/serverfarms', appServicePlanPortalName)
+    serverFarmId: serverFarm.id
   }
 
   resource appsettings 'config@2022-03-01' = {
     name: 'appsettings'
     properties: {
-      ConnectionString: listkeys(communicationServicesResourceId, '2020-08-20').primaryConnectionString
+      ConnectionString: ACS.listkeys().primaryConnectionString
     }
   }
 
@@ -43,4 +46,15 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
       packageUri: packageUrl
     }
   }
+}
+
+module applyIncomingCallEvent './applyEvent.bicep' = {
+  name: 'applyIncomingCallEvent'
+  scope: resourceGroup(splitAcsId[2], splitAcsId[4])
+  params: {
+    communicationServicesResourceId: communicationServicesResourceId
+    defaultHostName: site.properties.defaultHostName
+  }
+
+  dependsOn: [ site::MSDeploy ]
 }

@@ -5,7 +5,7 @@ param appName string
 param sku string = 'F1'
 
 var appServicePlanPortalName = 'AppServicePlan-${appName}'
-var packageUrl = 'https://github.com/Azure-Samples/communication-services-pstn-calling/releases/latest/download/calling-tutorial-build.zip'
+var packageUrl = 'https://github.com/Azure/communication-services-pstn-calling/releases/latest/download/calling-tutorial-build.zip'
 var commsName = 'CommunicationServices-${appName}'
 var location = resourceGroup().location
 
@@ -29,18 +29,15 @@ resource serverFarm 'Microsoft.Web/serverfarms@2022-03-01' = {
 resource site 'Microsoft.Web/sites@2022-03-01' = {
   name: appName
   location: location
-  dependsOn: [
-    serverFarm
-    ACS
-  ]
+  dependsOn: [ ACS ]
   properties: {
-    serverFarmId: resourceId('Microsoft.Web/serverfarms', appServicePlanPortalName)
+    serverFarmId: serverFarm.id
   }
 
   resource appsettings 'config@2022-03-01' = {
     name: 'appsettings'
     properties: {
-      ResourceConnectionString: listkeys(commsName, '2020-08-20-preview').primaryConnectionString
+      ConnectionString: ACS.listKeys().primaryConnectionString
     }
   }
 
@@ -51,4 +48,21 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
       packageUri: packageUrl
     }
   }
+}
+
+resource incomingCallEventSub 'Microsoft.EventGrid/eventSubscriptions@2022-06-15' = {
+  name: 'PSTNIncomingCallSubscription'
+  scope: ACS
+  properties: {
+    destination: {
+      properties: {
+        endpointUrl: 'https://${site.properties.defaultHostName}/incomingCall'
+      }
+      endpointType: 'WebHook'
+    }
+    filter: {
+      includedEventTypes: [ 'Microsoft.Communication.IncomingCall' ]
+    }
+  }
+  dependsOn: [ site::MSDeploy ]
 }
