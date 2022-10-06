@@ -29,7 +29,7 @@ jobs:
         run: cd Server && dotnet nuget add source https://pkgs.dev.azure.com/azure-sdk/public/_packaging/azure-sdk-for-net/nuget/v3/index.json && dotnet restore
 
       - name: Build Server
-        run: cd Server && dotnet build --configuration Release --no-restore
+        run: cd Server && dotnet build --configuration Development --no-restore
 
       - name: Install Client dependencies
         run: cd Client && npm install
